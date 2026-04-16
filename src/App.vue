@@ -112,6 +112,11 @@ const handleToggleLock = ({ student_number, section_number }) => {
         student.isLocked = !!lockedStudents.value[sNum];
       }
     }
+
+    const masterStudent = results.value.placedStudents.find(s => String(s.student_number) === sNum);
+    if (masterStudent) {
+      masterStudent.isLocked = !!lockedStudents.value[sNum];
+    }
   }
 };
 
