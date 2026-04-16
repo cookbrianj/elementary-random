@@ -63,9 +63,10 @@
               <td class="teacher-cell">
                 <div v-if="editingTeacherStudentNum === student.student_number" class="teacher-edit">
                   <select 
-                    v-model="student.section_number" 
+                    :value="student.section_number" 
                     @change="handleTeacherChange(student, $event)"
                     @blur="editingTeacherStudentNum = null"
+                    @click.stop
                     class="teacher-select"
                   >
                     <option v-for="section in sections" :key="section.section_number" :value="section.section_number">

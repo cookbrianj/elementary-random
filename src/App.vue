@@ -125,8 +125,8 @@ const handleToggleLock = ({ student_number, section_number }) => {
 const handleStudentDrop = ({ student_number, source_section, target_section }) => {
   if (!results.value) return;
   
-  const sourceClass = results.value.classSummaries.find(c => c.section_number === source_section);
-  const targetClass = results.value.classSummaries.find(c => c.section_number === target_section);
+  const sourceClass = results.value.classSummaries.find(c => String(c.section_number) === String(source_section));
+  const targetClass = results.value.classSummaries.find(c => String(c.section_number) === String(target_section));
   
   if (!sourceClass || !targetClass) return;
   
