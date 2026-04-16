@@ -52,7 +52,11 @@
           />
         </div>
         
-        <MasterRoster v-if="results.placedStudents" :students="results.placedStudents" />
+        <MasterRoster 
+          v-if="results.placedStudents" 
+          :students="results.placedStudents" 
+          @toggle-lock="handleToggleLock" 
+        />
       </div>
     </main>
   </div>

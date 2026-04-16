@@ -34,6 +34,7 @@
         <table>
           <thead>
             <tr>
+              <th style="width: 40px"></th>
               <th @click="toggleSort('student_name')" class="sortable">
                 Name 
                 <span v-if="sortBy === 'student_name'" class="sort-indicator">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span>
@@ -50,7 +51,13 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="student in filteredStudents" :key="student.student_number">
+            <tr v-for="student in filteredStudents" :key="student.student_number" :class="{ 'is-locked': student.isLocked }">
+              <td class="lock-cell">
+                <button class="lock-btn" @click.stop="toggleLock(student)" :title="student.isLocked ? 'Unlock student' : 'Lock student to this class'">
+                  <svg v-if="student.isLocked" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                  <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.3"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>
+                </button>
+              </td>
               <td class="name-cell">{{ student.student_name }}</td>
               <td class="text-muted">{{ student.student_number }}</td>
               <td class="teacher-cell">
@@ -84,6 +91,8 @@ const props = defineProps({
   }
 });
 
+const emit = defineEmits(['toggle-lock']);
+
 const isExpanded = ref(false);
 const searchQuery = ref("");
 const sortBy = ref("student_name");
@@ -102,6 +111,13 @@ const toggleSort = (key) => {
     sortBy.value = key;
     sortOrder.value = 'asc';
   }
+};
+
+const toggleLock = (student) => {
+  emit('toggle-lock', {
+    student_number: student.student_number,
+    section_number: student.section_number
+  });
 };
 
 const filteredStudents = computed(() => {
@@ -303,6 +319,36 @@ td {
 .tag.iep { background-color: rgba(16, 185, 129, 0.1); color: var(--success); }
 .tag.mll { background-color: rgba(245, 158, 11, 0.1); color: #fbbf24; }
 .tag.default { background-color: rgba(148, 163, 184, 0.1); color: var(--text-muted); }
+
+tr.is-locked {
+  background-color: rgba(197, 179, 88, 0.05);
+}
+tr.is-locked td {
+  color: var(--text-active);
+  font-weight: 500;
+}
+
+.lock-cell {
+  text-align: center;
+  padding: 0.75rem 0.25rem !important;
+}
+
+.lock-btn {
+  background: none;
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease;
+}
+
+.lock-btn:hover {
+  transform: scale(1.2);
+  color: var(--primary-hover);
+}
 
 .empty-state {
   padding: 3rem;
