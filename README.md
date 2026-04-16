@@ -1,5 +1,5 @@
 # Elementary Random Student Placement Dashboard
-### Neosho School District | Wildcat Pride
+### Neosho School District 
 
 An interactive, web-based tool for equitably distributing students into elementary classrooms based on demographic parity, academic needs, and class capacity.
 
@@ -11,7 +11,7 @@ An interactive, web-based tool for equitably distributing students into elementa
 
 ## 🌟 Overview
 
-This application automates the complex process of building balanced elementary classrooms. By ingesting student demographic data and class capacities via CSV (or PowerSchool JSON), it uses a multi-pass balancing algorithm to ensure every teacher receives a diverse and equitable group of students.
+This application automates the complex process of building balanced elementary classrooms. By ingesting student demographic data and class capacities via CSV it uses a multi-pass balancing algorithm to ensure every teacher receives a diverse and equitable group of students.
 
 ### Key Logic & Features
 - **Equitable Balancing**: Prioritizes the distribution of students with IEP and MLL statuses across all available sections.
@@ -90,9 +90,5 @@ npm run dev
 
 ---
 
-## 🛠 PowerSchool Integration (Future)
-This project is architected for easy migration to a PowerSchool Plugin. Future iterations will replace the `FileUpload` component with a live `fetch` call to a PowerSchool `~[tlist_sql]` endpoint, enabling real-time placements directly within the SIS.
 
----
-
-*Developed for Neosho School District. Go Wildcats!*
+*Developed for Neosho School District.*
