@@ -37,13 +37,20 @@
         <table>
           <thead>
             <tr>
+               <th style="width: 40px"></th>
                <th>Number</th>
                <th>Name</th>
                <th>Details</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="student in summary.roster" :key="student.student_number" draggable="true" @dragstart="handleDragStart($event, student)" class="draggable-row">
+            <tr v-for="student in summary.roster" :key="student.student_number" :draggable="!student.isLocked" @dragstart="handleDragStart($event, student)" class="draggable-row" :class="{ 'is-locked': student.isLocked }">
+              <td class="lock-cell">
+                <button class="lock-btn" @click.stop="toggleLock(student)" :title="student.isLocked ? 'Unlock student' : 'Lock student to this class'">
+                  <svg v-if="student.isLocked" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                  <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.3"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>
+                </button>
+              </td>
               <td>{{ student.student_number }}</td>
               <td>{{ student.student_name }}</td>
               <td>
@@ -79,7 +86,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['drop-student', 'update-max']);
+const emit = defineEmits(['drop-student', 'update-max', 'toggle-lock']);
 
 const copied = ref(false);
 const isEditingMax = ref(false);
@@ -138,6 +145,13 @@ const handleDrop = (e) => {
   } catch(err) {
     // ignore
   }
+};
+
+const toggleLock = (student) => {
+  emit('toggle-lock', {
+    student_number: student.student_number,
+    section_number: props.summary.section_number
+  });
 };
 
 const chartData = computed(() => {
@@ -345,11 +359,38 @@ th {
 tr:last-child td {
   border-bottom: none;
 }
-tr.draggable-row {
+tr.draggable-row:not(.is-locked) {
   cursor: grab;
 }
-tr.draggable-row:active {
+tr.draggable-row:not(.is-locked):active {
   cursor: grabbing;
+}
+tr.is-locked {
+  background-color: rgba(197, 179, 88, 0.05);
+  cursor: default;
+}
+tr.is-locked td {
+  color: var(--text-active);
+  font-weight: 500;
+}
+.lock-cell {
+  text-align: center;
+  padding: 0.5rem 0.25rem !important;
+}
+.lock-btn {
+  background: none;
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease;
+}
+.lock-btn:hover {
+  transform: scale(1.2);
+  color: var(--primary-hover);
 }
 .tags {
   display: flex;

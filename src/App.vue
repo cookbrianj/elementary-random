@@ -48,8 +48,11 @@
             :show-roster="showRosters"
             @drop-student="handleStudentDrop"
             @update-max="handleUpdateMax"
+            @toggle-lock="handleToggleLock"
           />
         </div>
+        
+        <MasterRoster v-if="results.placedStudents" :students="results.placedStudents" />
       </div>
     </main>
   </div>
@@ -59,6 +62,7 @@
 import { ref, computed } from 'vue';
 import FileUpload from './components/FileUpload.vue';
 import ClassDemographicsChart from './components/ClassDemographicsChart.vue';
+import MasterRoster from './components/MasterRoster.vue';
 import { runBalancer, exportToCSV } from './utils/balancer';
 
 const studentsData = ref(null);
@@ -67,6 +71,7 @@ const selectedGrade = ref("");
 const errorMessage = ref("");
 const results = ref(null);
 const showRosters = ref(true);
+const lockedStudents = ref({}); // student_number -> section_number
 
 const availableGrades = computed(() => {
   if (!studentsData.value || !classesData.value) return [];
@@ -80,9 +85,29 @@ const handleRunClick = () => {
   errorMessage.value = "";
   results.value = null;
   try {
-    results.value = runBalancer(studentsData.value, classesData.value, selectedGrade.value);
+    results.value = runBalancer(studentsData.value, classesData.value, selectedGrade.value, lockedStudents.value);
   } catch (err) {
     errorMessage.value = err.message || "An unexpected error occurred.";
+  }
+};
+
+const handleToggleLock = ({ student_number, section_number }) => {
+  const sNum = String(student_number);
+  if (lockedStudents.value[sNum]) {
+    delete lockedStudents.value[sNum];
+  } else {
+    lockedStudents.value[sNum] = String(section_number);
+  }
+  
+  // Update the local results state to reflect the UI change immediately
+  if (results.value) {
+    const section = results.value.classSummaries.find(c => String(c.section_number) === String(section_number));
+    if (section) {
+      const student = section.roster.find(s => String(s.student_number) === sNum);
+      if (student) {
+        student.isLocked = !!lockedStudents.value[sNum];
+      }
+    }
   }
 };
 
@@ -100,6 +125,11 @@ const handleStudentDrop = ({ student_number, source_section, target_section }) =
   const [student] = sourceClass.roster.splice(studentIndex, 1);
   targetClass.roster.push(student);
   targetClass.roster.sort((a, b) => a.student_name.localeCompare(b.student_name));
+  
+  // If the student was already locked, update their lock destination
+  if (lockedStudents.value[String(student_number)]) {
+    lockedStudents.value[String(student_number)] = String(target_section);
+  }
   
   sourceClass.total = sourceClass.roster.length;
   sourceClass.maleCount = sourceClass.roster.filter(s => String(s.gender).toLowerCase().trim() === 'm').length;

@@ -1,6 +1,6 @@
 import Papa from 'papaparse';
 
-export function runBalancer(students, classes, targetGrade) {
+export function runBalancer(students, classes, targetGrade, lockedMap = {}) {
   // Convert targetGrade to string for comparison, but handle robustly
   const gradeStr = String(targetGrade).trim();
   
@@ -12,11 +12,6 @@ export function runBalancer(students, classes, targetGrade) {
   }
   if (gradeStudents.length === 0) {
     throw new Error(`No students found for grade level ${gradeStr}`);
-  }
-
-  const totalCapacity = gradeClasses.reduce((sum, c) => sum + parseInt(c.max_students || 0, 10), 0);
-  if (gradeStudents.length > totalCapacity) {
-    throw new Error(`Insufficient capacity. ${gradeStudents.length} students, but only room for ${totalCapacity}.`);
   }
 
   // Initialize classes with tracking properties
@@ -34,7 +29,33 @@ export function runBalancer(students, classes, targetGrade) {
     return s === 'true' || s === 'yes' || s === '1' || s === 'y';
   };
 
-  // Group students
+  // Pre-place locked students
+  const lockedStudentNumbers = Object.keys(lockedMap);
+  const remainingStudents = [];
+
+  gradeStudents.forEach(s => {
+    const sNum = String(s.student_number);
+    if (lockedMap[sNum]) {
+      const targetSection = String(lockedMap[sNum]);
+      const targetClass = classStatus.find(c => String(c.section_number) === targetSection);
+      if (targetClass) {
+        targetClass.roster.push(s);
+        targetClass.currentCount++;
+      } else {
+        // Source class was not found (maybe grade level changed?), treat as remaining
+        remainingStudents.push(s);
+      }
+    } else {
+      remainingStudents.push(s);
+    }
+  });
+
+  const totalCapacity = classStatus.reduce((sum, c) => sum + parseInt(c.max_students || 0, 10), 0);
+  if (gradeStudents.length > totalCapacity) {
+    throw new Error(`Insufficient capacity. ${gradeStudents.length} students, but only room for ${totalCapacity}.`);
+  }
+
+  // Group remaining students
   const pools = {
     iep_mll: [],
     iep_only: [],
@@ -42,7 +63,7 @@ export function runBalancer(students, classes, targetGrade) {
     regular: []
   };
 
-  gradeStudents.forEach(s => {
+  remainingStudents.forEach(s => {
     const hasIEP = isTrue(s.iep);
     const hasMLL = isTrue(s.mll);
     
@@ -147,7 +168,8 @@ export function runBalancer(students, classes, targetGrade) {
         student_name: s.student_name || s.name || 'Unknown',
         gender: s.gender,
         iep: isTrue(s.iep),
-        mll: isTrue(s.mll)
+        mll: isTrue(s.mll),
+        isLocked: !!lockedMap[String(s.student_number)]
       })).sort((a, b) => a.student_name.localeCompare(b.student_name))
     }))
   };
