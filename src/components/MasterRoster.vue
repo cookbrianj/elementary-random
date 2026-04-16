@@ -61,7 +61,26 @@
               <td class="name-cell">{{ student.student_name }}</td>
               <td class="text-muted">{{ student.student_number }}</td>
               <td class="teacher-cell">
-                <span class="teacher-tag">{{ student.teacher_name }} ({{ student.section_number }})</span>
+                <div v-if="editingTeacherStudentNum === student.student_number" class="teacher-edit">
+                  <select 
+                    v-model="student.section_number" 
+                    @change="handleTeacherChange(student, $event)"
+                    @blur="editingTeacherStudentNum = null"
+                    class="teacher-select"
+                  >
+                    <option v-for="section in sections" :key="section.section_number" :value="section.section_number">
+                      {{ section.teacher_name }}
+                    </option>
+                  </select>
+                </div>
+                <span 
+                  v-else 
+                  class="teacher-tag clickable" 
+                  @click="editingTeacherStudentNum = student.student_number"
+                  title="Click to change teacher"
+                >
+                  {{ student.teacher_name }} ({{ student.section_number }})
+                </span>
               </td>
               <td>
                 <div class="tags">
@@ -88,15 +107,20 @@ const props = defineProps({
   students: {
     type: Array,
     required: true
+  },
+  sections: {
+    type: Array,
+    required: true
   }
 });
 
-const emit = defineEmits(['toggle-lock']);
+const emit = defineEmits(['toggle-lock', 'move-student']);
 
 const isExpanded = ref(false);
 const searchQuery = ref("");
 const sortBy = ref("student_name");
 const sortOrder = ref("asc");
+const editingTeacherStudentNum = ref(null);
 
 const isTrue = (val) => {
   if (!val) return false;
@@ -118,6 +142,16 @@ const toggleLock = (student) => {
     student_number: student.student_number,
     section_number: student.section_number
   });
+};
+
+const handleTeacherChange = (student, event) => {
+  const newSectionNumber = event.target.value;
+  emit('move-student', {
+    student_number: student.student_number,
+    source_section: student.section_number,
+    target_section: newSectionNumber
+  });
+  editingTeacherStudentNum.value = null;
 };
 
 const filteredStudents = computed(() => {
@@ -296,12 +330,30 @@ td {
   color: var(--text-active);
 }
 
-.teacher-tag {
-  background-color: rgba(197, 179, 88, 0.1);
-  color: var(--primary);
-  padding: 0.25rem 0.625rem;
+.teacher-tag.clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.teacher-tag.clickable:hover {
+  background-color: var(--primary);
+  color: #fff;
+}
+
+.teacher-edit {
+  display: flex;
+  align-items: center;
+}
+
+.teacher-select {
+  background-color: var(--bg-color);
+  color: var(--text-active);
+  border: 1px solid var(--primary);
   border-radius: 4px;
+  padding: 0.125rem 0.25rem;
   font-size: 0.8rem;
+  font-family: var(--font-sans);
+  outline: none;
 }
 
 .tags {

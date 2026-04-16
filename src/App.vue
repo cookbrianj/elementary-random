@@ -55,7 +55,9 @@
         <MasterRoster 
           v-if="results.placedStudents" 
           :students="results.placedStudents" 
+          :sections="results.classSummaries"
           @toggle-lock="handleToggleLock" 
+          @move-student="handleStudentDrop"
         />
       </div>
     </main>
