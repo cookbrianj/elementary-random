@@ -9,6 +9,14 @@
       <div class="row">
         <FileUpload title="Students" @data-loaded="data => studentsData = data" />
         <FileUpload title="Classes" @data-loaded="data => classesData = data" />
+        <div class="card resume-card">
+          <h3>Resume Session</h3>
+          <p>Load a previously saved .json project file.</p>
+          <div class="resume-controls">
+            <input type="file" id="resumeUpload" @change="handleProjectUpload" accept=".json" style="display: none" />
+            <label for="resumeUpload" class="button secondary">Upload Project File</label>
+          </div>
+        </div>
       </div>
 
       <div class="card control-panel" v-if="studentsData && classesData">
@@ -33,6 +41,10 @@
           <div style="display: flex; gap: 1rem;">
             <button @click="showRosters = !showRosters" class="secondary">
               {{ showRosters ? 'Hide Rosters' : 'Show Rosters' }}
+            </button>
+            <button @click="saveProject" class="secondary save-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+              Save Project
             </button>
             <button @click="downloadResults" class="secondary">
                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
@@ -65,7 +77,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import FileUpload from './components/FileUpload.vue';
 import ClassDemographicsChart from './components/ClassDemographicsChart.vue';
 import MasterRoster from './components/MasterRoster.vue';
@@ -181,6 +193,76 @@ const downloadResults = () => {
     exportToCSV(results.value.placedStudents);
   }
 };
+
+const saveProject = () => {
+  const projectData = {
+    studentsData: studentsData.value,
+    classesData: classesData.value,
+    selectedGrade: selectedGrade.value,
+    lockedStudents: lockedStudents.value,
+    results: results.value,
+    version: "1.0"
+  };
+  
+  const blob = new Blob([JSON.stringify(projectData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  const timestamp = new Date().toISOString().split('T')[0];
+  link.download = `placement_project_${selectedGrade.value || 'temp'}_${timestamp}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
+const handleProjectUpload = (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.studentsData) studentsData.value = data.studentsData;
+      if (data.classesData) classesData.value = data.classesData;
+      if (data.selectedGrade) selectedGrade.value = data.selectedGrade;
+      if (data.lockedStudents) lockedStudents.value = data.lockedStudents;
+      if (data.results) results.value = data.results;
+      
+      errorMessage.value = "";
+    } catch (err) {
+      errorMessage.value = "Failed to load project file. Please ensure it is a valid .json project.";
+    }
+  };
+  reader.readAsText(file);
+};
+
+// Auto-save logic
+watch([studentsData, classesData, selectedGrade, lockedStudents, results], () => {
+  const projectData = {
+    studentsData: studentsData.value,
+    classesData: classesData.value,
+    selectedGrade: selectedGrade.value,
+    lockedStudents: lockedStudents.value,
+    results: results.value
+  };
+  localStorage.setItem('nsd_placement_autosave', JSON.stringify(projectData));
+}, { deep: true });
+
+onMounted(() => {
+  const saved = localStorage.getItem('nsd_placement_autosave');
+  if (saved) {
+    try {
+      const data = JSON.parse(saved);
+      if (data.studentsData) studentsData.value = data.studentsData;
+      if (data.classesData) classesData.value = data.classesData;
+      if (data.selectedGrade) selectedGrade.value = data.selectedGrade;
+      if (data.lockedStudents) lockedStudents.value = data.lockedStudents;
+      if (data.results) results.value = data.results;
+    } catch (e) {
+      console.error("Failed to restore autosave", e);
+    }
+  }
+});
 </script>
 
 <style scoped>
@@ -207,10 +289,36 @@ header p {
   gap: 1.5rem;
   margin-bottom: 2rem;
 }
-@media(min-width: 768px) {
+@media(min-width: 992px) {
   .row {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
   }
+}
+
+.resume-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  border-style: dashed;
+}
+.resume-card h3 {
+  margin-top: 0;
+  color: var(--primary);
+}
+.resume-card p {
+  font-size: 0.825rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+.save-btn {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.save-btn:hover {
+  background-color: rgba(197, 179, 88, 0.1);
 }
 
 .control-panel {
