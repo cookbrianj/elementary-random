@@ -107,15 +107,17 @@ const errorMessage = ref("");
 const results = ref(null);
 const showRosters = ref(true);
 const lockedStudents = ref({}); // student_number -> section_number
+const allResultsByGrade = ref({}); // { '2': balancerResults, '3': ... }
 
-// Clear results when data changes
+// Clear all results when raw data changes
 watch([studentsData, classesData], () => {
+  allResultsByGrade.value = {};
   results.value = null;
 });
 
-// Clear results when grade level changes
-watch(selectedGrade, () => {
-  results.value = null;
+// Switch results when grade level changes
+watch(selectedGrade, (newGrade) => {
+  results.value = allResultsByGrade.value[newGrade] || null;
 });
 
 const availableGrades = computed(() => {
@@ -128,12 +130,14 @@ const availableGrades = computed(() => {
 
 const handleRunClick = () => {
   errorMessage.value = "";
-  results.value = null;
   try {
     const balancerResults = runBalancer(studentsData.value, classesData.value, selectedGrade.value, lockedStudents.value);
     // Sort class summaries alphabetically by teacher name
     balancerResults.classSummaries.sort((a, b) => a.teacher_name.localeCompare(b.teacher_name));
+    
+    // Save to both current view and the persistent store
     results.value = balancerResults;
+    allResultsByGrade.value[selectedGrade.value] = balancerResults;
   } catch (err) {
     errorMessage.value = err.message || "An unexpected error occurred.";
   }
@@ -304,8 +308,9 @@ const saveProject = () => {
     classesData: classesData.value,
     selectedGrade: selectedGrade.value,
     lockedStudents: lockedStudents.value,
-    results: results.value,
-    version: "1.0",
+    allResultsByGrade: allResultsByGrade.value,
+    results: results.value, // for immediate backward compatibility
+    version: "1.1",
     savedAt: new Date().toISOString()
   };
   
@@ -333,7 +338,14 @@ const handleProjectUpload = (event) => {
       if (data.classesData) classesData.value = data.classesData;
       if (data.selectedGrade) selectedGrade.value = data.selectedGrade;
       if (data.lockedStudents) lockedStudents.value = data.lockedStudents;
-      if (data.results) results.value = data.results;
+      if (data.allResultsByGrade) {
+        allResultsByGrade.value = data.allResultsByGrade;
+        results.value = data.allResultsByGrade[selectedGrade.value] || null;
+      } else if (data.results) {
+        // Handle legacy scenario files
+        results.value = data.results;
+        allResultsByGrade.value[selectedGrade.value] = data.results;
+      }
       
       errorMessage.value = "";
     } catch (err) {
@@ -344,12 +356,13 @@ const handleProjectUpload = (event) => {
 };
 
 // Auto-save logic
-watch([studentsData, classesData, selectedGrade, lockedStudents, results], () => {
+watch([studentsData, classesData, selectedGrade, lockedStudents, results, allResultsByGrade], () => {
   const projectData = {
     studentsData: studentsData.value,
     classesData: classesData.value,
     selectedGrade: selectedGrade.value,
     lockedStudents: lockedStudents.value,
+    allResultsByGrade: allResultsByGrade.value,
     results: results.value
   };
   localStorage.setItem('nsd_placement_autosave', JSON.stringify(projectData));
@@ -364,7 +377,13 @@ onMounted(() => {
       if (data.classesData) classesData.value = data.classesData;
       if (data.selectedGrade) selectedGrade.value = data.selectedGrade;
       if (data.lockedStudents) lockedStudents.value = data.lockedStudents;
-      if (data.results) results.value = data.results;
+      if (data.allResultsByGrade) {
+        allResultsByGrade.value = data.allResultsByGrade;
+        results.value = data.allResultsByGrade[selectedGrade.value] || null;
+      } else if (data.results) {
+        results.value = data.results;
+        allResultsByGrade.value[selectedGrade.value] = data.results;
+      }
     } catch (e) {
       console.error("Failed to restore autosave", e);
     }
