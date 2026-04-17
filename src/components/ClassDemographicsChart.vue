@@ -262,7 +262,8 @@ const chartOptions = {
 .chart-card {
   display: flex;
   flex-direction: column;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: fadeInUp 0.5s ease-out both;
 }
 .card-content {
   display: flex;
@@ -292,16 +293,20 @@ const chartOptions = {
   margin-top: 0.25rem;
 }
 .badge {
-  background-color: var(--primary);
-  color: #fff;
+  background: linear-gradient(135deg, var(--primary), #D4C46A);
+  color: #0c0c0c;
   padding: 0.25rem 0.5rem;
   border-radius: var(--radius-sm);
   font-size: 0.75rem;
   font-weight: bold;
   cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 0 0 var(--primary-glow);
 }
 .badge:hover {
-  background-color: var(--primary-hover);
+  background: linear-gradient(135deg, var(--primary-hover), var(--primary));
+  box-shadow: 0 0 12px var(--primary-glow);
+  transform: scale(1.05);
 }
 .badge-input {
   background-color: var(--primary);
@@ -351,11 +356,11 @@ const chartOptions = {
 
 .expansion-area {
   margin-top: 1rem;
-  animation: slideDown 0.3s ease-out;
+  animation: slideDown 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .divider {
   height: 1px;
-  background-color: var(--surface-border);
+  background: linear-gradient(90deg, transparent, var(--surface-border), rgba(197, 179, 88, 0.2), var(--surface-border), transparent);
   margin-bottom: 1rem;
 }
 .roster-header {
@@ -410,7 +415,7 @@ tr.draggable-row:not(.is-locked):active {
   cursor: grabbing;
 }
 tr.is-locked {
-  background-color: rgba(197, 179, 88, 0.05);
+  background: linear-gradient(90deg, rgba(197, 179, 88, 0.08), rgba(197, 179, 88, 0.03));
   cursor: default;
 }
 tr.is-locked td {
@@ -457,7 +462,7 @@ tr.is-locked td {
   color: #fbbf24;
 }
 .tag.default {
-  background-color: rgba(148, 163, 184, 0.2);
+  background: linear-gradient(135deg, rgba(148, 163, 184, 0.2), rgba(148, 163, 184, 0.1));
   color: var(--text-muted);
 }
 

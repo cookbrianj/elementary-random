@@ -1,0 +1,23 @@
+course_number,teacher_name,grade_level,max_students,section_number
+EL0HR,Clark 0-1,0,28,901
+EL0HR,Garcia 0-2,0,28,902
+EL0HR,Lee 0-3,0,28,903
+EL0HR,Lee 0-4,0,28,904
+EL1HR,Miller 1-1,1,28,905
+EL1HR,Martinez 1-2,1,28,906
+EL1HR,Wilson 1-3,1,28,907
+EL1HR,Martinez 1-4,1,28,908
+EL2HR,Taylor 2-1,2,28,909
+EL2HR,Walker 2-2,2,28,910
+EL2HR,Wildcat 2-3,2,28,911
+EL2HR,Wildcat 2-4,2,28,912
+EL2HR,Thompson 2-5,2,28,913
+EL3HR,White 3-1,3,28,914
+EL3HR,Wildcat 3-2,3,28,915
+EL3HR,Clark 3-3,3,28,916
+EL3HR,Wilson 3-4,3,28,917
+EL4HR,Lewis 4-1,4,28,918
+EL4HR,Clark 4-2,4,28,919
+EL4HR,Moore 4-3,4,28,920
+EL4HR,Taylor 4-4,4,28,921
+EL4HR,Thomas 4-5,4,28,922

@@ -118,6 +118,7 @@ watch([studentsData, classesData], () => {
 // Switch results when grade level changes
 watch(selectedGrade, (newGrade) => {
   results.value = allResultsByGrade.value[newGrade] || null;
+  errorMessage.value = "";
 });
 
 const availableGrades = computed(() => {
@@ -396,6 +397,7 @@ header {
   margin-bottom: 2rem;
   border-bottom: 1px solid var(--surface-border);
   padding-bottom: 2rem;
+  animation: fadeInUp 0.5s ease-out;
 }
 .header-content {
   display: flex;
@@ -411,11 +413,13 @@ header {
 }
 header h1 {
   font-size: 2.25rem;
-  background: linear-gradient(to right, var(--primary), #ffffff);
+  background: linear-gradient(135deg, var(--primary), #E8D98A, #ffffff);
+  background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   display: inline-block;
   margin-bottom: 0.25rem;
+  animation: shimmer 4s linear infinite;
 }
 header p {
   color: var(--text-muted);
@@ -425,10 +429,11 @@ header p {
 .main-nav {
   display: flex;
   gap: 0.5rem;
-  background-color: var(--card-bg);
+  background: linear-gradient(135deg, rgba(24,24,24,0.9), rgba(30,30,30,0.9));
   padding: 0.375rem;
   border-radius: var(--radius-md);
   border: 1px solid var(--surface-border);
+  backdrop-filter: blur(10px);
 }
 .main-nav button {
   background: transparent;
@@ -437,15 +442,23 @@ header p {
   padding: 0.5rem 1.25rem;
   color: var(--text-muted);
   border-radius: var(--radius-sm);
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  box-shadow: none;
+}
+.main-nav button::after {
+  display: none;
 }
 .main-nav button:hover {
   color: var(--text-active);
+  background: rgba(255,255,255,0.04);
+  transform: none;
+  box-shadow: none;
 }
 .main-nav button.active {
-  background-color: var(--primary);
+  background: linear-gradient(135deg, var(--primary), #D4C46A);
   color: var(--bg-color);
   font-weight: 600;
+  box-shadow: 0 0 12px var(--primary-glow);
 }
 
 .row {
@@ -453,6 +466,7 @@ header p {
   grid-template-columns: 1fr;
   gap: 1.5rem;
   margin-bottom: 2rem;
+  animation: fadeInUp 0.6s ease-out 0.1s both;
 }
 @media(min-width: 992px) {
   .row {
@@ -472,6 +486,11 @@ header p {
   align-items: center;
   text-align: center;
   border-style: dashed;
+  border-color: rgba(197, 179, 88, 0.3);
+  background: linear-gradient(145deg, var(--surface-color), rgba(197, 179, 88, 0.03));
+}
+.resume-card:hover {
+  border-color: var(--primary);
 }
 .resume-card h3 {
   margin-top: 0;
@@ -484,7 +503,7 @@ header p {
 }
 
 .scenario-upload-btn {
-  background-color: transparent;
+  background: transparent;
   border: 2px solid var(--primary);
   color: var(--primary);
   padding: 0.75rem 1.5rem;
@@ -492,18 +511,37 @@ header p {
   font-weight: 600;
   font-size: 0.875rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   display: inline-block;
   text-transform: uppercase;
   letter-spacing: 0.025em;
   box-shadow: 0 4px 12px rgba(197, 179, 88, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.scenario-upload-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: var(--primary);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.4s ease, height 0.4s ease;
+  z-index: -1;
 }
 
 .scenario-upload-btn:hover {
-  background-color: var(--primary);
   color: var(--bg-color);
-  box-shadow: 0 6px 16px rgba(197, 179, 88, 0.2);
+  box-shadow: 0 6px 20px rgba(197, 179, 88, 0.25);
   transform: translateY(-1px);
+}
+.scenario-upload-btn:hover::before {
+  width: 300px;
+  height: 300px;
 }
 
 .scenario-upload-btn:active {
@@ -512,6 +550,7 @@ header p {
 
 .control-panel {
   margin-bottom: 2rem;
+  animation: fadeInUp 0.6s ease-out 0.2s both;
 }
 .controls {
   display: flex;
@@ -528,10 +567,15 @@ header p {
 .error-box {
   margin-top: 1rem;
   padding: 1rem;
-  background-color: rgba(225, 29, 72, 0.1);
+  background: linear-gradient(135deg, rgba(225, 29, 72, 0.1), rgba(225, 29, 72, 0.05));
   color: #fb7185;
   border: 1px solid rgba(225, 29, 72, 0.4);
   border-radius: var(--radius-sm);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.results-dashboard {
+  animation: fadeInUp 0.5s ease-out;
 }
 
 .results-header {
@@ -541,6 +585,16 @@ header p {
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--surface-border);
+}
+
+.results-header h2 {
+  background: linear-gradient(135deg, var(--primary), #E8D98A);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.save-btn {
+  animation: pulseGlow 3s ease-in-out infinite;
 }
 
 .charts-grid {
@@ -554,3 +608,4 @@ header p {
   }
 }
 </style>
+

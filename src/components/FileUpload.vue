@@ -56,6 +56,7 @@ const handleFileDrop = (e) => {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  animation: fadeInUp 0.5s ease-out both;
 }
 .header {
   display: flex;
@@ -97,11 +98,13 @@ const handleFileDrop = (e) => {
 .drop-zone:hover {
   border-color: var(--primary);
   color: var(--primary);
+  background: linear-gradient(135deg, rgba(197, 179, 88, 0.03), rgba(197, 179, 88, 0.06));
+  box-shadow: inset 0 0 20px rgba(197, 179, 88, 0.05);
 }
 .drop-zone.has-file {
   border: 2px solid var(--success);
   color: var(--text-active);
-  background-color: rgba(16, 185, 129, 0.05);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(16, 185, 129, 0.02));
 }
 .text-sm {
   font-size: 0.875rem;
