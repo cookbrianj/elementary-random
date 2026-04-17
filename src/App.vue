@@ -74,6 +74,7 @@
             @drop-student="handleStudentDrop"
             @update-max="handleUpdateMax"
             @toggle-lock="handleToggleLock"
+            @delete-section="handleDeleteSection"
           />
         </div>
         
@@ -243,6 +244,34 @@ const handleUpdateMax = ({ section_number, newMax }) => {
     if (originalClass) {
       originalClass.max_students = String(newMax);
     }
+  }
+};
+
+const handleDeleteSection = (section_number) => {
+  if (!classesData.value) return;
+  
+  const targetClass = classesData.value.find(c => String(c.section_number) === String(section_number));
+  if (!targetClass) return;
+
+  const confirmed = window.confirm(
+    `Are you sure you want to delete the section for ${targetClass.teacher_name}? \n\nThis will remove the classroom and re-run the 'Balance Classes' function to redistribute all students across the remaining rooms.`
+  );
+
+  if (!confirmed) return;
+
+  // 1. Remove from classesData
+  classesData.value = classesData.value.filter(c => String(c.section_number) !== String(section_number));
+
+  // 2. Remove any locks associated with this section
+  Object.keys(lockedStudents.value).forEach(studentNum => {
+    if (String(lockedStudents.value[studentNum]) === String(section_number)) {
+      delete lockedStudents.value[studentNum];
+    }
+  });
+
+  // 3. Re-run balancer if results are currently shown
+  if (results.value) {
+    handleRunClick();
   }
 };
 
