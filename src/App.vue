@@ -17,6 +17,7 @@
             <label for="resumeUpload" class="button secondary">Upload Project File</label>
           </div>
         </div>
+        <AddTeacherForm @add-teacher="handleAddTeacher" />
       </div>
 
       <div class="card control-panel" v-if="studentsData && classesData">
@@ -79,6 +80,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
 import FileUpload from './components/FileUpload.vue';
+import AddTeacherForm from './components/AddTeacherForm.vue';
 import ClassDemographicsChart from './components/ClassDemographicsChart.vue';
 import MasterRoster from './components/MasterRoster.vue';
 import { runBalancer, exportToCSV } from './utils/balancer';
@@ -107,6 +109,28 @@ const handleRunClick = () => {
   } catch (err) {
     errorMessage.value = err.message || "An unexpected error occurred.";
   }
+};
+
+const handleAddTeacher = (teacherInfo) => {
+  if (!classesData.value) {
+    classesData.value = [];
+  }
+  
+  // Generate a unique section number for manual entries
+  const existingSections = classesData.value.map(c => String(c.section_number));
+  let manualIndex = 101;
+  while (existingSections.includes(`M${manualIndex}`)) {
+    manualIndex++;
+  }
+  
+  const newClass = {
+    teacher_name: teacherInfo.teacher_name,
+    grade_level: teacherInfo.grade_level,
+    max_students: String(teacherInfo.max_students),
+    section_number: `M${manualIndex}`
+  };
+  
+  classesData.value.push(newClass);
 };
 
 const handleToggleLock = ({ student_number, section_number }) => {
@@ -299,7 +323,12 @@ header p {
 }
 @media(min-width: 992px) {
   .row {
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media(min-width: 1200px) {
+  .row {
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 
