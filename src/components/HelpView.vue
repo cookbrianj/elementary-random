@@ -7,6 +7,8 @@
           <li><a href="#overview" @click.prevent="scrollTo('overview')">Overview</a></li>
           <li><a href="#student-format" @click.prevent="scrollTo('student-format')">Student File Layout</a></li>
           <li><a href="#class-format" @click.prevent="scrollTo('class-format')">Class File Layout</a></li>
+          <li><a href="#manual-teachers" @click.prevent="scrollTo('manual-teachers')">Adding Teachers Manually</a></li>
+          <li><a href="#capacity" @click.prevent="scrollTo('capacity')">Adjusting Capacities</a></li>
           <li><a href="#saving" @click.prevent="scrollTo('saving')">Saving Scenarios</a></li>
           <li><a href="#resuming" @click.prevent="scrollTo('resuming')">Resuming Sessions</a></li>
           <li><a href="#autosave" @click.prevent="scrollTo('autosave')">Auto-Save Fail-safe</a></li>
@@ -75,7 +77,10 @@
             </table>
           </div>
           <div class="csv-example">
-            <header>Example CSV Content</header>
+            <header>
+              <span>Example CSV Content</span>
+              <button @click="downloadSample('students')" class="download-link">Download Template</button>
+            </header>
             <pre>student_number,student_name,grade_level,gender,iep,mll
 1001,"Smith, Sarah",2,F,0,0
 1002,"Brown, Mike",2,M,1,0
@@ -122,10 +127,48 @@
             </table>
           </div>
           <div class="csv-example">
-            <header>Example CSV Content</header>
+            <header>
+              <span>Example CSV Content</span>
+              <button @click="downloadSample('classes')" class="download-link">Download Template</button>
+            </header>
             <pre>teacher_name,grade_level,max_students,section_number
 Mrs. Johnson,2,25,201
 Mr. Davis,2,24,202</pre>
+          </div>
+        </div>
+      </section>
+
+      <section id="manual-teachers" class="help-section">
+        <h2>Adding Teachers Manually</h2>
+        <div class="card help-card">
+          <div class="feature-info">
+            <div class="icon-box">➕</div>
+            <div>
+              <p>You can supplement your imported list with new classrooms at any time without re-uploading your CSV.</p>
+              <ul>
+                <li>Navigate to the <strong>Add Teacher Manually</strong> card on the landing page.</li>
+                <li>Fill in the <strong>Teacher Name</strong>, <strong>Section Number</strong>, and <strong>Max Students</strong>.</li>
+                <li>Click <strong>Add Section</strong>. The teacher will instantly appear in your active dashboard cards and dropdowns.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="capacity" class="help-section">
+        <h2>Adjusting Capacities</h2>
+        <div class="card help-card">
+          <div class="feature-info highlight">
+            <div class="icon-box">⚖️</div>
+            <div>
+              <p>You can fine-tune class sizes directly from the dashboard cards to accommodate larger groups or smaller environments.</p>
+              <ul>
+                <li>Locate the <strong>Student Count</strong> at the top of any teacher card (e.g. <code>18 / 25</code>).</li>
+                <li><strong>Click the number</strong> representing the maximum (the <code>25</code> in this case).</li>
+                <li>Enter the new target capacity in the popup and press <strong>Enter</strong>.</li>
+                <li>The progress bar and balancing logic will update immediately based on this new limit.</li>
+              </ul>
+            </div>
           </div>
         </div>
       </section>
@@ -188,6 +231,27 @@ const scrollTo = (id) => {
   if (el) {
     el.scrollIntoView({ behavior: 'smooth' });
   }
+};
+
+const downloadSample = (type) => {
+  let content = '';
+  let filename = '';
+  
+  if (type === 'students') {
+    content = 'student_number,student_name,grade_level,gender,iep,mll\n1001,"Smith, Sarah",2,F,0,0\n1002,"Brown, Mike",2,M,1,0\n1003,"Garcia, Maria",2,F,0,1';
+    filename = 'sample_students.csv';
+  } else {
+    content = 'teacher_name,grade_level,max_students,section_number\n"Mrs. Johnson",2,25,201\n"Mr. Davis",2,24,202';
+    filename = 'sample_classes.csv';
+  }
+  
+  const blob = new Blob([content], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
 };
 </script>
 
@@ -327,6 +391,25 @@ code {
   font-size: 0.75rem;
   color: var(--text-muted);
   font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.download-link {
+  background: transparent;
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  font-size: 0.7rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.download-link:hover {
+  background-color: var(--primary);
+  color: var(--bg-color);
 }
 
 .csv-example pre {
