@@ -44,7 +44,7 @@
             </button>
             <button @click="saveProject" class="secondary save-btn">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-              Save Project
+              Save Scenario
             </button>
             <button @click="downloadResults" class="secondary">
                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
@@ -195,21 +195,29 @@ const downloadResults = () => {
 };
 
 const saveProject = () => {
+  const scenarioName = window.prompt("Enter a name for this placement scenario:", `Grade ${selectedGrade.value || ''} - ${new Date().toLocaleDateString()}`);
+  
+  if (scenarioName === null) return; // User cancelled
+  
   const projectData = {
+    scenarioName: scenarioName,
     studentsData: studentsData.value,
     classesData: classesData.value,
     selectedGrade: selectedGrade.value,
     lockedStudents: lockedStudents.value,
     results: results.value,
-    version: "1.0"
+    version: "1.0",
+    savedAt: new Date().toISOString()
   };
   
   const blob = new Blob([JSON.stringify(projectData, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  const timestamp = new Date().toISOString().split('T')[0];
-  link.download = `placement_project_${selectedGrade.value || 'temp'}_${timestamp}.json`;
+  
+  // Format filename: replace spaces/special chars with underscores
+  const safeName = scenarioName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+  link.download = `scenario_${safeName}.json`;
   link.click();
   URL.revokeObjectURL(url);
 };
