@@ -116,21 +116,38 @@ const handleAddTeacher = (teacherInfo) => {
     classesData.value = [];
   }
   
-  // Generate a unique section number for manual entries
   const existingSections = classesData.value.map(c => String(c.section_number));
-  let manualIndex = 101;
-  while (existingSections.includes(`M${manualIndex}`)) {
-    manualIndex++;
+  if (existingSections.includes(String(teacherInfo.section_number))) {
+    errorMessage.value = `Section number ${teacherInfo.section_number} already exists.`;
+    return;
   }
-  
+
   const newClass = {
     teacher_name: teacherInfo.teacher_name,
-    grade_level: teacherInfo.grade_level,
+    grade_level: String(teacherInfo.grade_level),
     max_students: String(teacherInfo.max_students),
-    section_number: `M${manualIndex}`
+    section_number: String(teacherInfo.section_number)
   };
   
   classesData.value.push(newClass);
+
+  // If we are currently looking at this grade, add it to the active results too
+  if (results.value && String(teacherInfo.grade_level) === String(selectedGrade.value)) {
+    results.value.classSummaries.push({
+      teacher_name: newClass.teacher_name,
+      section_number: newClass.section_number,
+      grade_level: newClass.grade_level,
+      max: parseInt(newClass.max_students),
+      total: 0,
+      maleCount: 0,
+      femaleCount: 0,
+      iepCount: 0,
+      mllCount: 0,
+      roster: []
+    });
+    // Optional: sort cards by teacher name
+    results.value.classSummaries.sort((a,b) => a.teacher_name.localeCompare(b.teacher_name));
+  }
 };
 
 const handleToggleLock = ({ student_number, section_number }) => {
