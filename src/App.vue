@@ -1,11 +1,23 @@
 <template>
   <div id="app">
     <header>
-      <h1>Student Class Placement</h1>
-      <p>Equitably distribute students across sections.</p>
+      <div class="header-content">
+        <div>
+          <h1>Student Class Placement</h1>
+          <p>Equitably distribute students across sections.</p>
+        </div>
+        <nav class="main-nav">
+          <button @click="currentView = 'dashboard'" :class="{ 'active': currentView === 'dashboard' }">Dashboard</button>
+          <button @click="currentView = 'help'" :class="{ 'active': currentView === 'help' }">Help</button>
+        </nav>
+      </div>
     </header>
 
-    <main>
+    <main v-if="currentView === 'help'">
+      <HelpView @back="currentView = 'dashboard'" />
+    </main>
+
+    <main v-else>
       <div class="row">
         <FileUpload title="Students" @data-loaded="data => studentsData = data" />
         <FileUpload title="Classes" @data-loaded="data => classesData = data" />
@@ -81,10 +93,12 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import FileUpload from './components/FileUpload.vue';
 import AddTeacherForm from './components/AddTeacherForm.vue';
+import HelpView from './components/HelpView.vue';
 import ClassDemographicsChart from './components/ClassDemographicsChart.vue';
 import MasterRoster from './components/MasterRoster.vue';
 import { runBalancer, exportToCSV } from './utils/balancer';
 
+const currentView = ref('dashboard');
 const studentsData = ref(null);
 const classesData = ref(null);
 const selectedGrade = ref("");
@@ -320,19 +334,58 @@ onMounted(() => {
 <style scoped>
 header {
   margin-bottom: 2rem;
-  text-align: center;
+  border-bottom: 1px solid var(--surface-border);
+  padding-bottom: 2rem;
+}
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+@media (max-width: 640px) {
+  .header-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 1.5rem;
+  }
 }
 header h1 {
-  font-size: 2.5rem;
+  font-size: 2.25rem;
   background: linear-gradient(to right, var(--primary), #ffffff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   display: inline-block;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
 }
 header p {
   color: var(--text-muted);
-  font-size: 1.125rem;
+  font-size: 1rem;
+}
+
+.main-nav {
+  display: flex;
+  gap: 0.5rem;
+  background-color: var(--card-bg);
+  padding: 0.375rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--surface-border);
+}
+.main-nav button {
+  background: transparent;
+  border: none;
+  font-size: 0.875rem;
+  padding: 0.5rem 1.25rem;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+.main-nav button:hover {
+  color: var(--text-active);
+}
+.main-nav button.active {
+  background-color: var(--primary);
+  color: var(--bg-color);
+  font-weight: 600;
 }
 
 .row {
