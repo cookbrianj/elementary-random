@@ -26,7 +26,7 @@
           <p>Load a previously saved .json project file.</p>
           <div class="resume-controls">
             <input type="file" id="resumeUpload" @change="handleProjectUpload" accept=".json" style="display: none" />
-            <label for="resumeUpload" class="button secondary">Upload Project File</label>
+            <label for="resumeUpload" class="scenario-upload-btn">Upload Saved Scenario</label>
           </div>
         </div>
         <AddTeacherForm @add-teacher="handleAddTeacher" />
@@ -420,15 +420,34 @@ header p {
 .resume-card p {
   font-size: 0.825rem;
   color: var(--text-muted);
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
-.save-btn {
-  border-color: var(--primary);
+.scenario-upload-btn {
+  background-color: transparent;
+  border: 2px solid var(--primary);
   color: var(--primary);
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  box-shadow: 0 4px 12px rgba(197, 179, 88, 0.1);
 }
-.save-btn:hover {
-  background-color: rgba(197, 179, 88, 0.1);
+
+.scenario-upload-btn:hover {
+  background-color: var(--primary);
+  color: var(--bg-color);
+  box-shadow: 0 6px 16px rgba(197, 179, 88, 0.2);
+  transform: translateY(-1px);
+}
+
+.scenario-upload-btn:active {
+  transform: translateY(0);
 }
 
 .control-panel {
