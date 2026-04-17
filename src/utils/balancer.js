@@ -90,6 +90,10 @@ export function runBalancer(students, classes, targetGrade, lockedMap = {}) {
   shuffleArray(pools.iep_only);
   shuffleArray(pools.mll_only);
 
+  // Shuffle classes internally so that distribution doesn't favor the first alphabetically
+  const distributionOrder = [...classStatus];
+  shuffleArray(distributionOrder);
+
   // Distribute function loops through sections
   let classIndex = 0;
   
@@ -99,8 +103,8 @@ export function runBalancer(students, classes, targetGrade, lockedMap = {}) {
       let placed = false;
       let attempts = 0;
       
-      while (!placed && attempts < classStatus.length) {
-        const currentClass = classStatus[classIndex];
+      while (!placed && attempts < distributionOrder.length) {
+        const currentClass = distributionOrder[classIndex];
         
         if (currentClass.currentCount < currentClass.max) {
           currentClass.roster.push(student);
@@ -109,7 +113,7 @@ export function runBalancer(students, classes, targetGrade, lockedMap = {}) {
         }
         
         // Move to next class
-        classIndex = (classIndex + 1) % classStatus.length;
+        classIndex = (classIndex + 1) % distributionOrder.length;
         attempts++;
       }
       
@@ -144,6 +148,7 @@ export function runBalancer(students, classes, targetGrade, lockedMap = {}) {
         student_number: s.student_number,
         student_name: s.student_name || s.name || 'Unknown',
         teacher_name: c.teacher_name,
+        course_number: c.course_number,
         section_number: c.section_number,
         iep: s.iep,
         mll: s.mll,
@@ -156,6 +161,7 @@ export function runBalancer(students, classes, targetGrade, lockedMap = {}) {
     placedStudents,
     classSummaries: classStatus.map(c => ({
       teacher_name: c.teacher_name,
+      course_number: c.course_number,
       section_number: c.section_number,
       total: c.currentCount,
       max: c.max,

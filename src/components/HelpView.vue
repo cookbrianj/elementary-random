@@ -104,6 +104,11 @@
               </thead>
               <tbody>
                 <tr>
+                  <td><code>course_number</code></td>
+                  <td>ID for the course (Required)</td>
+                  <td>101, 102, MUS</td>
+                </tr>
+                <tr>
                   <td><code>teacher_name</code></td>
                   <td>The name displayed on the card</td>
                   <td>Mrs. Johnson</td>
@@ -131,9 +136,9 @@
               <span>Example CSV Content</span>
               <button @click="downloadSample('classes')" class="download-link">Download Template</button>
             </header>
-            <pre>teacher_name,grade_level,max_students,section_number
-Mrs. Johnson,2,25,201
-Mr. Davis,2,24,202</pre>
+            <pre>course_number,teacher_name,grade_level,max_students,section_number
+101,Mrs. Johnson,2,25,201
+101,Mr. Davis,2,24,202</pre>
           </div>
         </div>
       </section>
@@ -241,7 +246,7 @@ const downloadSample = (type) => {
     content = 'student_number,student_name,grade_level,gender,iep,mll\n1001,"Smith, Sarah",2,F,0,0\n1002,"Brown, Mike",2,M,1,0\n1003,"Garcia, Maria",2,F,0,1';
     filename = 'sample_students.csv';
   } else {
-    content = 'teacher_name,grade_level,max_students,section_number\n"Mrs. Johnson",2,25,201\n"Mr. Davis",2,24,202';
+    content = 'course_number,teacher_name,grade_level,max_students,section_number\n"101","Mrs. Johnson",2,25,201\n"101","Mr. Davis",2,24,202';
     filename = 'sample_classes.csv';
   }
   

@@ -108,6 +108,16 @@ const results = ref(null);
 const showRosters = ref(true);
 const lockedStudents = ref({}); // student_number -> section_number
 
+// Clear results when data changes
+watch([studentsData, classesData], () => {
+  results.value = null;
+});
+
+// Clear results when grade level changes
+watch(selectedGrade, () => {
+  results.value = null;
+});
+
 const availableGrades = computed(() => {
   if (!studentsData.value || !classesData.value) return [];
   const sGrades = studentsData.value.map(s => String(s.grade_level).trim()).filter(Boolean);
@@ -143,6 +153,7 @@ const handleAddTeacher = (teacherInfo) => {
   const newClass = {
     teacher_name: teacherInfo.teacher_name,
     grade_level: String(teacherInfo.grade_level),
+    course_number: String(teacherInfo.course_number),
     max_students: String(teacherInfo.max_students),
     section_number: String(teacherInfo.section_number)
   };
@@ -153,6 +164,7 @@ const handleAddTeacher = (teacherInfo) => {
   if (results.value && String(teacherInfo.grade_level) === String(selectedGrade.value)) {
     results.value.classSummaries.push({
       teacher_name: newClass.teacher_name,
+      course_number: newClass.course_number,
       section_number: newClass.section_number,
       grade_level: newClass.grade_level,
       max: parseInt(newClass.max_students),

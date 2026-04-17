@@ -23,12 +23,21 @@
           </div>
 
           <div class="form-row">
-            <div class="form-group" style="grid-column: span 2">
+            <div class="form-group">
+              <label>Course Number</label>
+              <input 
+                type="text" 
+                v-model="form.course_number" 
+                placeholder="e.g. 101" 
+                required 
+              />
+            </div>
+            <div class="form-group">
               <label>Section Number</label>
               <input 
                 type="text" 
                 v-model="form.section_number" 
-                placeholder="e.g. 101" 
+                placeholder="e.g. 201" 
                 required 
               />
             </div>
@@ -74,6 +83,7 @@ const isExpanded = ref(false);
 
 const form = reactive({
   teacher_name: '',
+  course_number: '',
   section_number: '',
   grade_level: '',
   max_students: 25
@@ -81,6 +91,7 @@ const form = reactive({
 
 const isFormValid = computed(() => {
   return form.teacher_name.trim() !== '' && 
+         form.course_number.trim() !== '' && 
          form.section_number.trim() !== '' && 
          form.grade_level.trim() !== '' && 
          form.max_students > 0;
@@ -93,6 +104,7 @@ const handleSubmit = () => {
   
   // Reset form
   form.teacher_name = '';
+  form.course_number = '';
   form.section_number = '';
   // Keep grade level as it's likely they are adding multiple for the same grade
   // form.grade_level = ''; 

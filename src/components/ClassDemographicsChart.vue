@@ -2,9 +2,10 @@
   <div class="card chart-card" :class="{ 'is-expanded': showRoster }" @dragover.prevent @drop="handleDrop">
     <div class="card-content">
       <div class="header">
-        <h4>
-          Section {{ summary.section_number }} - {{ summary.teacher_name }}
-        </h4>
+        <div class="title-group">
+          <h4>{{ summary.teacher_name }}</h4>
+          <div class="sub-title">{{ summary.course_number }}.{{ summary.section_number }}</div>
+        </div>
         <div class="actions">
           <span class="badge" v-if="!isEditingMax" @click="startEditingMax" title="Click to edit max capacity">
             {{ summary.total }} / {{ summary.max }}
@@ -271,12 +272,24 @@ const chartOptions = {
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 1rem;
+}
+.title-group {
+  display: flex;
+  flex-direction: column;
 }
 .header h4 {
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.125rem;
+  color: #ffffff;
+}
+.sub-title {
+  font-size: 0.825rem;
+  color: var(--primary);
+  font-family: monospace;
+  font-weight: 500;
+  margin-top: 0.25rem;
 }
 .badge {
   background-color: var(--primary);
