@@ -419,7 +419,7 @@ header h1 {
   -webkit-text-fill-color: transparent;
   display: inline-block;
   margin-bottom: 0.25rem;
-  animation: shimmer 4s linear infinite;
+  animation: shimmer 40s linear infinite;
 }
 header p {
   color: var(--text-muted);
