@@ -413,8 +413,19 @@ header {
 }
 header h1 {
   font-size: 2.25rem;
-  background: linear-gradient(135deg, var(--primary), #E8D98A, #ffffff);
-  background-size: 200% auto;
+  background: linear-gradient(
+    135deg, 
+    var(--primary), 
+    #D4C46A, 
+    #E8D98A, 
+    #f0e8c0, 
+    #ffffff, 
+    #f0e8c0, 
+    #E8D98A, 
+    #D4C46A, 
+    var(--primary)
+  );
+  background-size: 400% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   display: inline-block;
