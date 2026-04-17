@@ -105,7 +105,10 @@ const handleRunClick = () => {
   errorMessage.value = "";
   results.value = null;
   try {
-    results.value = runBalancer(studentsData.value, classesData.value, selectedGrade.value, lockedStudents.value);
+    const balancerResults = runBalancer(studentsData.value, classesData.value, selectedGrade.value, lockedStudents.value);
+    // Sort class summaries alphabetically by teacher name
+    balancerResults.classSummaries.sort((a, b) => a.teacher_name.localeCompare(b.teacher_name));
+    results.value = balancerResults;
   } catch (err) {
     errorMessage.value = err.message || "An unexpected error occurred.";
   }
