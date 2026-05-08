@@ -1,6 +1,6 @@
 import Papa from 'papaparse';
 
-export function runBalancer(students, classes, targetGrade, lockedMap = {}) {
+export function runBalancer(students, classes, targetGrade, lockedMap = {}, avoidsData = null) {
   // Convert targetGrade to string for comparison, but handle robustly
   const gradeStr = String(targetGrade).trim();
   
@@ -63,6 +63,24 @@ export function runBalancer(students, classes, targetGrade, lockedMap = {}) {
     regular: []
   };
 
+  // Build avoids map
+  const avoidsMap = {};
+  if (avoidsData && avoidsData.length > 0) {
+    avoidsData.forEach(row => {
+      const keys = Object.keys(row);
+      if (keys.length >= 2) {
+        const s1 = String(row[keys[0]]).trim();
+        const s2 = String(row[keys[1]]).trim();
+        if (s1 && s2) {
+          if (!avoidsMap[s1]) avoidsMap[s1] = new Set();
+          if (!avoidsMap[s2]) avoidsMap[s2] = new Set();
+          avoidsMap[s1].add(s2);
+          avoidsMap[s2].add(s1);
+        }
+      }
+    });
+  }
+
   remainingStudents.forEach(s => {
     const hasIEP = isTrue(s.iep);
     const hasMLL = isTrue(s.mll);
@@ -103,10 +121,23 @@ export function runBalancer(students, classes, targetGrade, lockedMap = {}) {
       let placed = false;
       let attempts = 0;
       
+      const studentNumStr = String(student.student_number).trim();
+      const avoidSet = avoidsMap[studentNumStr];
+      
       while (!placed && attempts < distributionOrder.length) {
         const currentClass = distributionOrder[classIndex];
         
-        if (currentClass.currentCount < currentClass.max) {
+        let hasAvoidConflict = false;
+        if (avoidSet) {
+          for (const existing of currentClass.roster) {
+            if (avoidSet.has(String(existing.student_number).trim())) {
+              hasAvoidConflict = true;
+              break;
+            }
+          }
+        }
+        
+        if (currentClass.currentCount < currentClass.max && !hasAvoidConflict) {
           currentClass.roster.push(student);
           currentClass.currentCount++;
           placed = true;
@@ -118,7 +149,7 @@ export function runBalancer(students, classes, targetGrade, lockedMap = {}) {
       }
       
       if (!placed) {
-        throw new Error(`Could not place student ${student.student_name || student.name || 'Unknown'} (${student.student_number}). All sections are full.`);
+        throw new Error(`Could not place student ${student.student_name || student.name || 'Unknown'} (${student.student_number}) due to capacity or avoid conflicts.`);
       }
     }
   };

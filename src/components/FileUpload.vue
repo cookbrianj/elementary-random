@@ -2,19 +2,19 @@
   <div class="card file-upload-card">
     <div class="header">
       <h3>{{ title }}</h3>
-      <span v-if="localFile" class="status success">Ready</span>
+      <span v-if="localFile || providedData" class="status success">Ready</span>
       <span v-else class="status pending">Waiting</span>
     </div>
     
-    <label class="drop-zone" :class="{ 'has-file': !!localFile }">
+    <label class="drop-zone" :class="{ 'has-file': !!localFile || !!providedData }">
       <input type="file" accept=".csv" @change="handleFileDrop" hidden />
-      <div v-if="!localFile">
+      <div v-if="!(localFile || providedData)">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         <p>Click to upload {{ title }} CSV</p>
       </div>
       <div v-else>
-        <p><strong>{{ localFile.name }}</strong></p>
-        <p class="text-sm">({{ parseResult?.length }} rows processed)</p>
+        <p><strong>{{ localFile ? localFile.name : 'Loaded from session' }}</strong></p>
+        <p class="text-sm">({{ localFile ? parseResult?.length : providedData?.length }} rows processed)</p>
       </div>
     </label>
   </div>
@@ -25,7 +25,8 @@ import { ref } from 'vue';
 import Papa from 'papaparse';
 
 const props = defineProps({
-  title: String
+  title: String,
+  providedData: Array
 });
 
 const emit = defineEmits(['data-loaded']);

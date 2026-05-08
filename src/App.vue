@@ -19,8 +19,9 @@
 
     <main v-else>
       <div class="row">
-        <FileUpload title="Students" @data-loaded="data => studentsData = data" />
-        <FileUpload title="Classes" @data-loaded="data => classesData = data" />
+        <FileUpload title="Students" :provided-data="studentsData" @data-loaded="data => studentsData = data" />
+        <FileUpload title="Classes" :provided-data="classesData" @data-loaded="data => classesData = data" />
+        <FileUpload title="Student Avoids (Optional)" :provided-data="avoidsData" @data-loaded="data => avoidsData = data" />
         <div class="card resume-card">
           <h3>Resume Session</h3>
           <p>Load a previously saved .json project file.</p>
@@ -102,23 +103,27 @@ import { runBalancer, exportToCSV } from './utils/balancer';
 const currentView = ref('dashboard');
 const studentsData = ref(null);
 const classesData = ref(null);
+const avoidsData = ref(null);
 const selectedGrade = ref("");
 const errorMessage = ref("");
-const results = ref(null);
+const results = computed(() => allResultsByGrade.value[selectedGrade.value] || null);
 const showRosters = ref(true);
 const lockedStudents = ref({}); // student_number -> section_number
 const allResultsByGrade = ref({}); // { '2': balancerResults, '3': ... }
+const isLoadingScenario = ref(false);
 
-// Clear all results when raw data changes
-watch([studentsData, classesData], () => {
+// Clear all results when raw data changes (but not during scenario loading)
+watch([studentsData, classesData, avoidsData], () => {
+  if (isLoadingScenario.value) return;
   allResultsByGrade.value = {};
-  results.value = null;
 });
 
-// Switch results when grade level changes
+// Auto-balance when a grade is selected and no results exist yet
 watch(selectedGrade, (newGrade) => {
-  results.value = allResultsByGrade.value[newGrade] || null;
   errorMessage.value = "";
+  if (newGrade && studentsData.value && classesData.value && !allResultsByGrade.value[newGrade]) {
+    handleRunClick();
+  }
 });
 
 const availableGrades = computed(() => {
@@ -132,13 +137,19 @@ const availableGrades = computed(() => {
 const handleRunClick = () => {
   errorMessage.value = "";
   try {
-    const balancerResults = runBalancer(studentsData.value, classesData.value, selectedGrade.value, lockedStudents.value);
-    // Sort class summaries alphabetically by teacher name
-    balancerResults.classSummaries.sort((a, b) => a.teacher_name.localeCompare(b.teacher_name));
+    const newAllResults = {};
+    for (const grade of availableGrades.value) {
+      try {
+        const balancerResults = runBalancer(studentsData.value, classesData.value, grade, lockedStudents.value, avoidsData.value);
+        balancerResults.classSummaries.sort((a, b) => a.teacher_name.localeCompare(b.teacher_name));
+        newAllResults[grade] = balancerResults;
+      } catch (e) {
+        throw new Error(`Grade ${grade}: ${e.message}`);
+      }
+    }
     
     // Save to both current view and the persistent store
-    results.value = balancerResults;
-    allResultsByGrade.value[selectedGrade.value] = balancerResults;
+    allResultsByGrade.value = newAllResults;
   } catch (err) {
     errorMessage.value = err.message || "An unexpected error occurred.";
   }
@@ -293,8 +304,15 @@ const handleDeleteSection = (section_number) => {
 };
 
 const downloadResults = () => {
-  if (results.value && results.value.placedStudents) {
-    exportToCSV(results.value.placedStudents);
+  const allPlaced = [];
+  Object.keys(allResultsByGrade.value).forEach(grade => {
+    if (allResultsByGrade.value[grade] && allResultsByGrade.value[grade].placedStudents) {
+      allPlaced.push(...allResultsByGrade.value[grade].placedStudents);
+    }
+  });
+  
+  if (allPlaced.length > 0) {
+    exportToCSV(allPlaced);
   }
 };
 
@@ -307,6 +325,7 @@ const saveProject = () => {
     scenarioName: scenarioName,
     studentsData: studentsData.value,
     classesData: classesData.value,
+    avoidsData: avoidsData.value,
     selectedGrade: selectedGrade.value,
     lockedStudents: lockedStudents.value,
     allResultsByGrade: allResultsByGrade.value,
@@ -335,21 +354,28 @@ const handleProjectUpload = (event) => {
   reader.onload = (e) => {
     try {
       const data = JSON.parse(e.target.result);
+      isLoadingScenario.value = true;
       if (data.studentsData) studentsData.value = data.studentsData;
       if (data.classesData) classesData.value = data.classesData;
+      if (data.avoidsData) avoidsData.value = data.avoidsData;
       if (data.selectedGrade) selectedGrade.value = data.selectedGrade;
       if (data.lockedStudents) lockedStudents.value = data.lockedStudents;
       if (data.allResultsByGrade) {
         allResultsByGrade.value = data.allResultsByGrade;
-        results.value = data.allResultsByGrade[selectedGrade.value] || null;
       } else if (data.results) {
         // Handle legacy scenario files
-        results.value = data.results;
-        allResultsByGrade.value[selectedGrade.value] = data.results;
+        allResultsByGrade.value = { [selectedGrade.value]: data.results };
       }
       
       errorMessage.value = "";
+      isLoadingScenario.value = false;
+      
+      // Auto-select saved grade or first available grade
+      if (!selectedGrade.value || !availableGrades.value.includes(selectedGrade.value)) {
+        selectedGrade.value = availableGrades.value[0] || "";
+      }
     } catch (err) {
+      isLoadingScenario.value = false;
       errorMessage.value = "Failed to load project file. Please ensure it is a valid .json project.";
     }
   };
@@ -357,10 +383,11 @@ const handleProjectUpload = (event) => {
 };
 
 // Auto-save logic
-watch([studentsData, classesData, selectedGrade, lockedStudents, results, allResultsByGrade], () => {
+watch([studentsData, classesData, avoidsData, selectedGrade, lockedStudents, results, allResultsByGrade], () => {
   const projectData = {
     studentsData: studentsData.value,
     classesData: classesData.value,
+    avoidsData: avoidsData.value,
     selectedGrade: selectedGrade.value,
     lockedStudents: lockedStudents.value,
     allResultsByGrade: allResultsByGrade.value,
@@ -374,18 +401,25 @@ onMounted(() => {
   if (saved) {
     try {
       const data = JSON.parse(saved);
+      isLoadingScenario.value = true;
       if (data.studentsData) studentsData.value = data.studentsData;
       if (data.classesData) classesData.value = data.classesData;
+      if (data.avoidsData) avoidsData.value = data.avoidsData;
       if (data.selectedGrade) selectedGrade.value = data.selectedGrade;
       if (data.lockedStudents) lockedStudents.value = data.lockedStudents;
       if (data.allResultsByGrade) {
         allResultsByGrade.value = data.allResultsByGrade;
-        results.value = data.allResultsByGrade[selectedGrade.value] || null;
       } else if (data.results) {
-        results.value = data.results;
-        allResultsByGrade.value[selectedGrade.value] = data.results;
+        allResultsByGrade.value = { [selectedGrade.value]: data.results };
+      }
+      isLoadingScenario.value = false;
+      
+      // Auto-select saved grade or first available grade
+      if (!selectedGrade.value || !availableGrades.value.includes(selectedGrade.value)) {
+        selectedGrade.value = availableGrades.value[0] || "";
       }
     } catch (e) {
+      isLoadingScenario.value = false;
       console.error("Failed to restore autosave", e);
     }
   }
