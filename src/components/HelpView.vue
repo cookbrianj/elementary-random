@@ -7,6 +7,7 @@
           <li><a href="#overview" @click.prevent="scrollTo('overview')">Overview</a></li>
           <li><a href="#student-format" @click.prevent="scrollTo('student-format')">Student File Layout</a></li>
           <li><a href="#class-format" @click.prevent="scrollTo('class-format')">Class File Layout</a></li>
+          <li><a href="#avoids-format" @click.prevent="scrollTo('avoids-format')">Student Avoids File</a></li>
           <li><a href="#manual-teachers" @click.prevent="scrollTo('manual-teachers')">Adding Teachers Manually</a></li>
           <li><a href="#capacity" @click.prevent="scrollTo('capacity')">Adjusting Capacities</a></li>
           <li><a href="#saving" @click.prevent="scrollTo('saving')">Saving Scenarios</a></li>
@@ -143,6 +144,59 @@
         </div>
       </section>
 
+      <section id="avoids-format" class="help-section">
+        <h2>Student Avoids File (Optional)</h2>
+        <div class="card help-card">
+          <p>To prevent specific students from being placed in the same classroom, upload an optional <strong>Student Avoids</strong> CSV. Each row defines a pair of students that must be separated.</p>
+          <div class="avoids-callout">
+            <span class="avoids-icon">🚫</span>
+            <div>
+              <p style="margin-bottom: 0.5rem;"><strong>How it works:</strong></p>
+              <ul style="margin-top: 0;">
+                <li>Relationships are <strong>bidirectional</strong> — listing Student A → Student B also prevents B → A.</li>
+                <li>The algorithm reads the <strong>first two columns</strong> of the CSV regardless of header names.</li>
+                <li>Student numbers must match IDs from the uploaded student file.</li>
+                <li>If a student cannot be placed without violating an avoids constraint, the balancer will display an error identifying the student.</li>
+                <li>Avoids data is persisted in saved scenario files and auto-save.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Header</th>
+                  <th>Description</th>
+                  <th>Value Examples</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>student_number_1</code></td>
+                  <td>ID of the first student in the pair (Required)</td>
+                  <td>1001, 00982</td>
+                </tr>
+                <tr>
+                  <td><code>student_number_2</code></td>
+                  <td>ID of the second student in the pair (Required)</td>
+                  <td>1003, 2045</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="csv-example">
+            <header>
+              <span>Example CSV Content</span>
+              <button @click="downloadSample('avoids')" class="download-link">Download Template</button>
+            </header>
+            <pre>student_number_1,student_number_2
+1001,1003
+1002,1005
+2010,2015</pre>
+          </div>
+        </div>
+      </section>
+
       <section id="manual-teachers" class="help-section">
         <h2>Adding Teachers Manually</h2>
         <div class="card help-card">
@@ -245,6 +299,9 @@ const downloadSample = (type) => {
   if (type === 'students') {
     content = 'student_number,student_name,grade_level,gender,iep,mll\n1001,"Smith, Sarah",2,F,0,0\n1002,"Brown, Mike",2,M,1,0\n1003,"Garcia, Maria",2,F,0,1';
     filename = 'sample_students.csv';
+  } else if (type === 'avoids') {
+    content = 'student_number_1,student_number_2\n1001,1003\n1002,1005';
+    filename = 'sample_avoids.csv';
   } else {
     content = 'course_number,teacher_name,grade_level,max_students,section_number\n"101","Mrs. Johnson",2,25,201\n"101","Mr. Davis",2,24,202';
     filename = 'sample_classes.csv';
@@ -455,5 +512,31 @@ code {
 
 .feature-info li {
   margin-bottom: 0.5rem;
+}
+
+.avoids-callout {
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+  background: linear-gradient(135deg, rgba(225, 29, 72, 0.06), rgba(225, 29, 72, 0.02));
+  border: 1px solid rgba(225, 29, 72, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 1.25rem;
+  margin: 1.5rem 0;
+}
+
+.avoids-icon {
+  font-size: 1.75rem;
+  flex-shrink: 0;
+}
+
+.avoids-callout ul {
+  padding-left: 1.25rem;
+}
+
+.avoids-callout li {
+  margin-bottom: 0.4rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
 }
 </style>

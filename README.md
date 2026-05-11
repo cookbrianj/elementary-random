@@ -16,6 +16,7 @@ An administrative-grade, web-based tool for equitably distributing students into
 *   **Weighted Parity**: prioritizes the distribution of students with IEP and MLL statuses across all available sections first.
 *   **Gender Balance**: Automatically maintains an even split of male and female students per classroom.
 *   **Randomized Residuals**: Fairly distributes "remainder" students so that classrooms with slightly higher counts are chosen randomly rather than alphabetically.
+*   **Student Avoids**: Optionally upload a CSV of student pairs that must not share a classroom. The algorithm enforces separation during placement and will error if a conflict cannot be resolved.
 
 ### 2. Multi-Grade Persistence
 *   **Session Switching**: Jump between grade levels (e.g., Grade 2 to Grade 3) without losing progress.
@@ -60,6 +61,16 @@ An administrative-grade, web-based tool for equitably distributing students into
 | `grade_level` | Grade Level | Yes | - |
 | `max_students` | Class Capacity | Yes | - |
 | `section_number` | Section Code | Yes | e.g. 201 |
+
+### Student Avoids CSV (Optional — `avoids.csv`)
+Prevents specific student pairs from being placed in the same classroom. Each row defines one pair that must be separated. The relationship is **bidirectional** — listing Student A → Student B also prevents B → A.
+
+| Header | Description | Required | Options |
+| :--- | :--- | :--- | :--- |
+| `student_number_1` | First student's ID | Yes | Must match a `student_number` from the student file |
+| `student_number_2` | Second student's ID | Yes | Must match a `student_number` from the student file |
+
+> **Note**: Column headers are flexible — the algorithm reads the first two columns regardless of header names. If a student cannot be placed without violating an avoids constraint (e.g., too few sections), the balancer will throw an error identifying the student.
 
 ---
 
