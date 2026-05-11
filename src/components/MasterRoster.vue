@@ -112,10 +112,14 @@
             <div class="modal-student-info">
               <strong>{{ selectedAvoidStudent.student_name }}</strong>
               <span class="text-muted" style="font-size: 0.85rem; margin-left: 0.5rem;">({{ selectedAvoidStudent.student_number }})</span>
+              <button class="lock-btn" @click.stop="toggleStudentLock(selectedAvoidStudent.student_number)" :title="isStudentLocked(selectedAvoidStudent.student_number) ? 'Unlock student' : 'Lock student to this class'" style="display: inline-flex; vertical-align: middle; margin-left: 0.25rem;">
+                <svg v-if="isStudentLocked(selectedAvoidStudent.student_number)" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.3"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>
+              </button>
             </div>
             <div class="modal-teacher-row">
               <span class="modal-teacher-label">Current Teacher:</span>
-              <select class="modal-teacher-select" :value="selectedAvoidStudent.section_number" @change="handleModalTeacherChange(selectedAvoidStudent, $event)">
+              <select class="modal-teacher-select" :value="selectedAvoidStudent.section_number" :disabled="isStudentLocked(selectedAvoidStudent.student_number)" @change="handleModalTeacherChange(selectedAvoidStudent, $event)">
                 <option v-for="section in sections" :key="'modal-sel-'+section.section_number" :value="section.section_number">
                   {{ section.teacher_name }}
                 </option>
@@ -127,10 +131,14 @@
               <li v-for="sNum in studentAvoids(selectedAvoidStudent)" :key="sNum">
                 <div>
                   {{ getStudentName(sNum) }} <span class="text-muted">({{ sNum }})</span>
+                  <button class="lock-btn" @click.stop="toggleStudentLock(sNum)" :title="isStudentLocked(sNum) ? 'Unlock student' : 'Lock student to this class'" style="display: inline-flex; vertical-align: middle; margin-left: 0.25rem;">
+                    <svg v-if="isStudentLocked(sNum)" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.3"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>
+                  </button>
                 </div>
                 <div class="modal-teacher-row" style="margin-top: 0.35rem;">
                   <span class="modal-teacher-label">Teacher:</span>
-                  <select class="modal-teacher-select" :value="getStudentSection(sNum)" @change="handleModalAvoidTeacherChange(sNum, $event)">
+                  <select class="modal-teacher-select" :value="getStudentSection(sNum)" :disabled="isStudentLocked(sNum)" @change="handleModalAvoidTeacherChange(sNum, $event)">
                     <option v-for="section in sections" :key="'modal-av-'+section.section_number" :value="section.section_number">
                       {{ section.teacher_name }}
                     </option>
@@ -209,6 +217,18 @@ const getStudentTeacher = (sNum) => {
 const getStudentSection = (sNum) => {
   const s = props.students.find(st => String(st.student_number) === String(sNum));
   return s ? String(s.section_number) : '';
+};
+
+const isStudentLocked = (sNum) => {
+  const s = props.students.find(st => String(st.student_number) === String(sNum));
+  return s ? !!s.isLocked : false;
+};
+
+const toggleStudentLock = (sNum) => {
+  const s = props.students.find(st => String(st.student_number) === String(sNum));
+  if (s) {
+    toggleLock(s);
+  }
 };
 
 const showAvoidsModal = (student) => {
@@ -656,7 +676,12 @@ tr.is-locked td {
   font-size: 0.825rem;
 }
 
-.modal-teacher-select:focus {
+.modal-teacher-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modal-teacher-select:focus:not(:disabled) {
   border-color: var(--primary);
   outline: none;
   box-shadow: 0 0 0 2px rgba(197, 179, 88, 0.15);
