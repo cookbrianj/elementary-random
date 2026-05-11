@@ -169,7 +169,11 @@ const availableGrades = computed(() => {
 });
 
 const filteredStudents = computed(() => {
-  let list = safeData.value;
+  let list = safeData.value.filter(s => {
+    return String(s.student_number || '').trim() !== '' &&
+           String(s.student_name || '').trim() !== '' &&
+           String(s.grade_level || '').trim() !== '';
+  });
   
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase().trim();
