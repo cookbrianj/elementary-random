@@ -101,22 +101,24 @@
     </div>
 
     <!-- Avoids Modal -->
-    <div v-if="selectedAvoidStudent" class="modal-overlay" @click="closeAvoidsModal">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h4>Avoids Constraints</h4>
-          <button class="close-btn" @click="closeAvoidsModal">×</button>
-        </div>
-        <div class="modal-body">
-          <p><strong>{{ selectedAvoidStudent.student_name }}</strong> should not be scheduled with:</p>
-          <ul class="avoids-list">
-            <li v-for="sNum in studentAvoids(selectedAvoidStudent)" :key="sNum">
-              {{ getStudentName(sNum) }} <span class="text-muted">({{ sNum }})</span>
-            </li>
-          </ul>
+    <Teleport to="body">
+      <div v-if="selectedAvoidStudent" class="modal-overlay" @click="closeAvoidsModal">
+        <div class="modal-content" @click.stop>
+          <div class="modal-header">
+            <h4>Avoids Constraints</h4>
+            <button class="close-btn" @click="closeAvoidsModal">×</button>
+          </div>
+          <div class="modal-body">
+            <p><strong>{{ selectedAvoidStudent.student_name }}</strong> should not be scheduled with:</p>
+            <ul class="avoids-list">
+              <li v-for="sNum in studentAvoids(selectedAvoidStudent)" :key="sNum">
+                {{ getStudentName(sNum) }} <span class="text-muted">({{ sNum }})</span>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
-    </div>
+    </Teleport>
   </div>
 </template>
 
@@ -502,7 +504,7 @@ tr.is-locked td {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 9999;
   animation: fadeIn 0.2s ease-out;
 }
 
