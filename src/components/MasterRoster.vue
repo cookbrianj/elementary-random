@@ -109,14 +109,32 @@
             <button class="close-btn" @click="closeAvoidsModal">×</button>
           </div>
           <div class="modal-body">
-            <p><strong>{{ selectedAvoidStudent.student_name }}</strong> should not be scheduled with:</p>
+            <div class="modal-student-info">
+              <strong>{{ selectedAvoidStudent.student_name }}</strong>
+              <span class="text-muted" style="font-size: 0.85rem; margin-left: 0.5rem;">({{ selectedAvoidStudent.student_number }})</span>
+            </div>
+            <div class="modal-teacher-row">
+              <span class="modal-teacher-label">Current Teacher:</span>
+              <select class="modal-teacher-select" :value="selectedAvoidStudent.section_number" @change="handleModalTeacherChange(selectedAvoidStudent, $event)">
+                <option v-for="section in sections" :key="'modal-sel-'+section.section_number" :value="section.section_number">
+                  {{ section.teacher_name }}
+                </option>
+              </select>
+            </div>
+            <div class="modal-divider"></div>
+            <p class="modal-subheading">Should not be scheduled with:</p>
             <ul class="avoids-list">
               <li v-for="sNum in studentAvoids(selectedAvoidStudent)" :key="sNum">
                 <div>
                   {{ getStudentName(sNum) }} <span class="text-muted">({{ sNum }})</span>
                 </div>
-                <div class="text-muted" style="font-size: 0.85rem; margin-top: 0.25rem;">
-                  Scheduled with: <strong>{{ getStudentTeacher(sNum) }}</strong>
+                <div class="modal-teacher-row" style="margin-top: 0.35rem;">
+                  <span class="modal-teacher-label">Teacher:</span>
+                  <select class="modal-teacher-select" :value="getStudentSection(sNum)" @change="handleModalAvoidTeacherChange(sNum, $event)">
+                    <option v-for="section in sections" :key="'modal-av-'+section.section_number" :value="section.section_number">
+                      {{ section.teacher_name }}
+                    </option>
+                  </select>
                 </div>
               </li>
             </ul>
@@ -188,12 +206,38 @@ const getStudentTeacher = (sNum) => {
   return s && s.teacher_name ? s.teacher_name : 'Not placed';
 };
 
+const getStudentSection = (sNum) => {
+  const s = props.students.find(st => String(st.student_number) === String(sNum));
+  return s ? String(s.section_number) : '';
+};
+
 const showAvoidsModal = (student) => {
   selectedAvoidStudent.value = student;
 };
 
 const closeAvoidsModal = () => {
   selectedAvoidStudent.value = null;
+};
+
+const handleModalTeacherChange = (student, event) => {
+  const newSectionNumber = event.target.value;
+  emit('move-student', {
+    student_number: student.student_number,
+    source_section: student.section_number,
+    target_section: newSectionNumber
+  });
+};
+
+const handleModalAvoidTeacherChange = (sNum, event) => {
+  const newSectionNumber = event.target.value;
+  const currentSection = getStudentSection(sNum);
+  if (currentSection && currentSection !== newSectionNumber) {
+    emit('move-student', {
+      student_number: sNum,
+      source_section: currentSection,
+      target_section: newSectionNumber
+    });
+  }
 };
 
 const isTrue = (val) => {
@@ -575,12 +619,61 @@ tr.is-locked td {
 }
 
 .avoids-list li {
-  padding: 0.5rem 0;
+  padding: 0.75rem 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .avoids-list li:last-child {
   border-bottom: none;
+}
+
+.modal-student-info {
+  margin-bottom: 0.75rem;
+  font-size: 1.05rem;
+}
+
+.modal-teacher-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.modal-teacher-label {
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.modal-teacher-select {
+  flex: 1;
+  padding: 0.375rem 0.5rem;
+  background-color: rgba(15, 23, 42, 0.5);
+  border: 1px solid var(--surface-border);
+  border-radius: 4px;
+  color: var(--text-active);
+  font-family: var(--font-sans);
+  font-size: 0.825rem;
+}
+
+.modal-teacher-select:focus {
+  border-color: var(--primary);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(197, 179, 88, 0.15);
+}
+
+.modal-divider {
+  height: 1px;
+  background-color: var(--surface-border);
+  margin: 1rem 0;
+}
+
+.modal-subheading {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 500;
 }
 
 @keyframes fadeIn {
