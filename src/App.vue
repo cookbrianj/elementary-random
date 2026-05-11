@@ -83,6 +83,7 @@
           v-if="results.placedStudents" 
           :students="results.placedStudents" 
           :sections="results.classSummaries"
+          :avoids-data="avoidsData"
           @toggle-lock="handleToggleLock" 
           @move-student="handleStudentDrop"
         />

@@ -87,6 +87,7 @@
                 <div class="tags">
                   <span v-if="isTrue(student.iep)" class="tag iep">IEP</span>
                   <span v-if="isTrue(student.mll)" class="tag mll">MLL</span>
+                  <span v-if="studentAvoids(student).length > 0" class="tag avoids clickable" @click="showAvoidsModal(student)">Avoids</span>
                   <span v-if="student.gender" class="tag default">{{ student.gender }}</span>
                 </div>
               </td>
@@ -96,6 +97,24 @@
             </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- Avoids Modal -->
+    <div v-if="selectedAvoidStudent" class="modal-overlay" @click="closeAvoidsModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h4>Avoids Constraints</h4>
+          <button class="close-btn" @click="closeAvoidsModal">×</button>
+        </div>
+        <div class="modal-body">
+          <p><strong>{{ selectedAvoidStudent.student_name }}</strong> should not be scheduled with:</p>
+          <ul class="avoids-list">
+            <li v-for="sNum in studentAvoids(selectedAvoidStudent)" :key="sNum">
+              {{ getStudentName(sNum) }} <span class="text-muted">({{ sNum }})</span>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
@@ -112,6 +131,10 @@ const props = defineProps({
   sections: {
     type: Array,
     required: true
+  },
+  avoidsData: {
+    type: Array,
+    default: () => []
   }
 });
 
@@ -122,6 +145,44 @@ const searchQuery = ref("");
 const sortBy = ref("student_name");
 const sortOrder = ref("asc");
 const editingTeacherStudentNum = ref(null);
+const selectedAvoidStudent = ref(null);
+
+const avoidsMap = computed(() => {
+  const map = {};
+  if (!props.avoidsData) return map;
+  props.avoidsData.forEach(row => {
+    const keys = Object.keys(row);
+    if (keys.length >= 2) {
+      const s1 = String(row[keys[0]]).trim();
+      const s2 = String(row[keys[1]]).trim();
+      if (s1 && s2) {
+        if (!map[s1]) map[s1] = [];
+        if (!map[s2]) map[s2] = [];
+        if (!map[s1].includes(s2)) map[s1].push(s2);
+        if (!map[s2].includes(s1)) map[s2].push(s1);
+      }
+    }
+  });
+  return map;
+});
+
+const studentAvoids = (student) => {
+  if (!student) return [];
+  return avoidsMap.value[String(student.student_number)] || [];
+};
+
+const getStudentName = (sNum) => {
+  const s = props.students.find(st => String(st.student_number) === String(sNum));
+  return s ? s.student_name : `Unknown Student`;
+};
+
+const showAvoidsModal = (student) => {
+  selectedAvoidStudent.value = student;
+};
+
+const closeAvoidsModal = () => {
+  selectedAvoidStudent.value = null;
+};
 
 const isTrue = (val) => {
   if (!val) return false;
@@ -412,6 +473,111 @@ tr.is-locked td {
 
 @keyframes slideDown {
   from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tag.avoids {
+  background-color: rgba(225, 29, 72, 0.1);
+  color: #fb7185;
+}
+
+.tag.clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tag.clickable:hover {
+  background-color: #e11d48;
+  color: #fff;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+  background-color: var(--surface-color);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease-out;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.modal-header h4 {
+  margin: 0;
+  color: var(--primary);
+  font-size: 1.125rem;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.close-btn:hover {
+  color: var(--text-active);
+  background: transparent;
+}
+
+.modal-body {
+  padding: 1.5rem;
+  color: var(--text-active);
+}
+
+.modal-body p {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.avoids-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.avoids-list li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.avoids-list li:last-child {
+  border-bottom: none;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
 </style>
