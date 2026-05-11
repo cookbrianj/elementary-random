@@ -8,6 +8,7 @@
         </div>
         <nav class="main-nav">
           <button @click="currentView = 'dashboard'" :class="{ 'active': currentView === 'dashboard' }">Dashboard</button>
+          <button @click="currentView = 'students'" :class="{ 'active': currentView === 'students' }">Students Editor</button>
           <button @click="currentView = 'avoids'" :class="{ 'active': currentView === 'avoids' }">Avoids Editor</button>
           <button @click="currentView = 'help'" :class="{ 'active': currentView === 'help' }">Help</button>
         </nav>
@@ -16,6 +17,14 @@
 
     <main v-if="currentView === 'help'">
       <HelpView @back="currentView = 'dashboard'" />
+    </main>
+
+    <main v-else-if="currentView === 'students'">
+      <StudentsEditor 
+        :students-data="studentsData"
+        @update-students="data => studentsData = data"
+        @back="currentView = 'dashboard'" 
+      />
     </main>
 
     <main v-else-if="currentView === 'avoids'">
@@ -108,6 +117,7 @@ import FileUpload from './components/FileUpload.vue';
 import AddTeacherForm from './components/AddTeacherForm.vue';
 import HelpView from './components/HelpView.vue';
 import AvoidsEditor from './components/AvoidsEditor.vue';
+import StudentsEditor from './components/StudentsEditor.vue';
 import ClassDemographicsChart from './components/ClassDemographicsChart.vue';
 import MasterRoster from './components/MasterRoster.vue';
 import { runBalancer, exportToCSV } from './utils/balancer';
