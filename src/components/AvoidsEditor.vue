@@ -10,6 +10,14 @@
         <h3>Add Constraint</h3>
         <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 1.5rem;">Select two students that should not be placed in the same classroom.</p>
         
+        <div class="form-group" v-if="availableGrades.length > 0">
+          <label>Filter by Grade</label>
+          <select v-model="selectedGradeFilter">
+            <option value="">All Grades</option>
+            <option v-for="g in availableGrades" :key="g" :value="g">Grade {{ g }}</option>
+          </select>
+        </div>
+
         <form @submit.prevent="addAvoid">
           <div class="form-group">
             <label>Student A</label>
@@ -64,11 +72,11 @@
               <tr v-for="(avoid, index) in parsedAvoids" :key="index">
                 <td>
                   <strong>{{ getStudentName(avoid.s1) }}</strong>
-                  <br><span class="text-muted" style="font-size: 0.8rem">{{ avoid.s1 }}</span>
+                  <br><span class="text-muted" style="font-size: 0.8rem">{{ avoid.s1 }} • Grade {{ getStudentGrade(avoid.s1) }}</span>
                 </td>
                 <td>
                   <strong>{{ getStudentName(avoid.s2) }}</strong>
-                  <br><span class="text-muted" style="font-size: 0.8rem">{{ avoid.s2 }}</span>
+                  <br><span class="text-muted" style="font-size: 0.8rem">{{ avoid.s2 }} • Grade {{ getStudentGrade(avoid.s2) }}</span>
                 </td>
                 <td style="text-align: right;">
                   <button @click="removeAvoid(index)" class="remove-btn" title="Remove constraint">
@@ -109,18 +117,35 @@ const emit = defineEmits(['update-avoids', 'back']);
 const student1 = ref("");
 const student2 = ref("");
 const errorMsg = ref("");
+const selectedGradeFilter = ref("");
 
 const hasStudents = computed(() => {
   return props.studentsData && props.studentsData.length > 0;
 });
 
+const availableGrades = computed(() => {
+  if (!hasStudents.value) return [];
+  const grades = props.studentsData.map(s => String(s.grade_level).trim()).filter(Boolean);
+  const unique = [...new Set(grades)];
+  return unique.sort((a, b) => parseInt(a) - parseInt(b));
+});
+
 const sortedStudents = computed(() => {
   if (!hasStudents.value) return [];
-  return [...props.studentsData].sort((a, b) => {
-    const nameA = String(a.student_name || '').toLowerCase();
-    const nameB = String(b.student_name || '').toLowerCase();
-    return nameA.localeCompare(nameB);
-  });
+  return props.studentsData
+    .filter(s => {
+      const name = String(s.student_name || '').trim();
+      if (!name) return false;
+      if (selectedGradeFilter.value && String(s.grade_level).trim() !== String(selectedGradeFilter.value)) {
+        return false;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      const nameA = String(a.student_name || '').toLowerCase();
+      const nameB = String(b.student_name || '').toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
 });
 
 const parsedAvoids = computed(() => {
@@ -142,7 +167,13 @@ const parsedAvoids = computed(() => {
 const getStudentName = (sNum) => {
   if (!hasStudents.value) return `Student ${sNum}`;
   const s = props.studentsData.find(st => String(st.student_number) === String(sNum));
-  return s ? s.student_name : `Student ${sNum}`;
+  return s && String(s.student_name).trim() ? s.student_name : `Student ${sNum}`;
+};
+
+const getStudentGrade = (sNum) => {
+  if (!hasStudents.value) return 'N/A';
+  const s = props.studentsData.find(st => String(st.student_number) === String(sNum));
+  return s && s.grade_level ? s.grade_level : 'N/A';
 };
 
 const addAvoid = () => {
