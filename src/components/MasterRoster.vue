@@ -112,7 +112,12 @@
             <p><strong>{{ selectedAvoidStudent.student_name }}</strong> should not be scheduled with:</p>
             <ul class="avoids-list">
               <li v-for="sNum in studentAvoids(selectedAvoidStudent)" :key="sNum">
-                {{ getStudentName(sNum) }} <span class="text-muted">({{ sNum }})</span>
+                <div>
+                  {{ getStudentName(sNum) }} <span class="text-muted">({{ sNum }})</span>
+                </div>
+                <div class="text-muted" style="font-size: 0.85rem; margin-top: 0.25rem;">
+                  Scheduled with: <strong>{{ getStudentTeacher(sNum) }}</strong>
+                </div>
               </li>
             </ul>
           </div>
@@ -176,6 +181,11 @@ const studentAvoids = (student) => {
 const getStudentName = (sNum) => {
   const s = props.students.find(st => String(st.student_number) === String(sNum));
   return s ? s.student_name : `Unknown Student`;
+};
+
+const getStudentTeacher = (sNum) => {
+  const s = props.students.find(st => String(st.student_number) === String(sNum));
+  return s && s.teacher_name ? s.teacher_name : 'Not placed';
 };
 
 const showAvoidsModal = (student) => {
