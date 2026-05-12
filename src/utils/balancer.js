@@ -218,6 +218,8 @@ export function runBalancer(students, classes, targetGrade, lockedMap = {}, avoi
       section_number: c.section_number,
       total: c.currentCount,
       max: c.max,
+      maxIep: c.maxIep,
+      maxMll: c.maxMll,
       maleCount: c.roster.filter(s => String(s.gender).toLowerCase().trim() === 'm').length,
       femaleCount: c.roster.filter(s => String(s.gender).toLowerCase().trim() === 'f').length,
       iepCount: c.roster.filter(s => isTrue(s.iep)).length,

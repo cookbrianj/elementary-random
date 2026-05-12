@@ -7,18 +7,9 @@
           <div class="sub-title">{{ summary.course_number }}.{{ summary.section_number }}</div>
         </div>
         <div class="actions">
-          <span class="badge" v-if="!isEditingMax" @click="startEditingMax" title="Click to edit max capacity">
+          <span class="badge" @click="openModal" title="Click to edit max capacity">
             {{ summary.total }} / {{ summary.max }}
           </span>
-          <input 
-            v-else
-            ref="maxInputRef"
-            type="number"
-            class="badge-input"
-            v-model.number="tempMax"
-            @blur="saveMax"
-            @keyup.enter="saveMax"
-          />
           <button class="delete-section-btn" @click.stop="confirmDelete" title="Delete this section">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
           </button>
@@ -71,6 +62,42 @@
         </table>
       </div>
     </div>
+    
+    <Teleport to="body">
+      <div v-if="isModalOpen" class="modal-overlay" @click="closeModal">
+        <div class="modal-content" @click.stop>
+          <div class="modal-header">
+            <h3>Edit Class Limits: {{ summary.teacher_name }}</h3>
+            <button class="close-btn" @click="closeModal">×</button>
+          </div>
+          <div class="modal-body">
+            <div class="warning-banner">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              <span>Changing these values will require re-balancing all students for this grade level.</span>
+            </div>
+            
+            <div class="limit-form">
+              <div class="form-group">
+                <label>Max Total Students</label>
+                <input type="number" v-model.number="tempMax" min="1" required />
+              </div>
+              <div class="form-group">
+                <label>Max IEP Students</label>
+                <input type="number" v-model.number="tempMaxIep" min="0" placeholder="No limit" />
+              </div>
+              <div class="form-group">
+                <label>Max MLL Students</label>
+                <input type="number" v-model.number="tempMaxMll" min="0" placeholder="No limit" />
+              </div>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="secondary" @click="closeModal">Cancel</button>
+            <button class="primary" @click="saveSettings">Apply Changes & Re-balance</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -95,26 +122,31 @@ const props = defineProps({
 const emit = defineEmits(['drop-student', 'update-max', 'toggle-lock', 'delete-section']);
 
 const copied = ref(false);
-const isEditingMax = ref(false);
+const isModalOpen = ref(false);
 const tempMax = ref(0);
-const maxInputRef = ref(null);
+const tempMaxIep = ref(null);
+const tempMaxMll = ref(null);
 
-const startEditingMax = () => {
+const openModal = () => {
   tempMax.value = props.summary.max;
-  isEditingMax.value = true;
-  setTimeout(() => {
-    if (maxInputRef.value) maxInputRef.value.focus();
-  }, 10);
+  tempMaxIep.value = props.summary.maxIep;
+  tempMaxMll.value = props.summary.maxMll;
+  isModalOpen.value = true;
 };
 
-const saveMax = () => {
-  if (!isEditingMax.value) return;
-  isEditingMax.value = false;
-  if (tempMax.value > 0 && tempMax.value !== props.summary.max) {
+const closeModal = () => {
+  isModalOpen.value = false;
+};
+
+const saveSettings = () => {
+  if (tempMax.value > 0) {
     emit('update-max', {
       section_number: props.summary.section_number,
-      newMax: tempMax.value
+      newMax: tempMax.value,
+      newMaxIep: tempMaxIep.value === '' ? null : tempMaxIep.value,
+      newMaxMll: tempMaxMll.value === '' ? null : tempMaxMll.value
     });
+    closeModal();
   }
 };
 
@@ -469,5 +501,120 @@ tr.is-locked td {
 @keyframes slideDown {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modal-content {
+  background-color: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  width: 90%;
+  max-width: 500px;
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+  animation: modalIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--surface-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--primary);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.warning-banner {
+  background-color: rgba(197, 179, 88, 0.1);
+  border-left: 4px solid var(--primary);
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  color: var(--primary);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.limit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.form-group input {
+  padding: 0.75rem;
+  background-color: rgba(15, 23, 42, 0.5);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-active);
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.form-group input:focus {
+  border-color: var(--primary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(197, 179, 88, 0.15);
+}
+
+.modal-actions {
+  padding: 1.5rem;
+  background-color: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid var(--surface-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
 }
 </style>

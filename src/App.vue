@@ -292,17 +292,16 @@ const handleStudentDrop = ({ student_number, source_section, target_section }) =
   }
 };
 
-const handleUpdateMax = ({ section_number, newMax }) => {
-  if (!results.value) return;
-  const summary = results.value.classSummaries.find(c => c.section_number === section_number);
-  if (summary) {
-    summary.max = newMax;
-  }
-  
+const handleUpdateMax = ({ section_number, newMax, newMaxIep, newMaxMll }) => {
   if (classesData.value) {
     const originalClass = classesData.value.find(c => String(c.section_number) === String(section_number));
     if (originalClass) {
       originalClass.max_students = String(newMax);
+      originalClass.max_iep = newMaxIep;
+      originalClass.max_mll = newMaxMll;
+      
+      // Re-run balancer as changes to limits require a redistribution
+      handleRunClick();
     }
   }
 };
