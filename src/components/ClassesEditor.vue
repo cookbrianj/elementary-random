@@ -37,6 +37,18 @@
             </div>
           </div>
           
+          <div class="form-row">
+            <div class="form-group half">
+              <label>Max IEP</label>
+              <input type="number" v-model="form.max_iep" min="0" placeholder="No limit" />
+            </div>
+            
+            <div class="form-group half">
+              <label>Max MLL</label>
+              <input type="number" v-model="form.max_mll" min="0" placeholder="No limit" />
+            </div>
+          </div>
+          
           <div v-if="errorMsg" class="error-msg">{{ errorMsg }}</div>
           
           <div class="form-actions">
@@ -72,6 +84,8 @@
                 <th>Course</th>
                 <th>Grade</th>
                 <th>Capacity</th>
+                <th>Max IEP</th>
+                <th>Max MLL</th>
                 <th style="width: 100px; text-align: right;">Action</th>
               </tr>
             </thead>
@@ -84,6 +98,8 @@
                 <td class="text-muted">{{ cls.course_number }}</td>
                 <td>{{ cls.grade_level }}</td>
                 <td>{{ cls.max_students }}</td>
+                <td>{{ cls.max_iep != null && cls.max_iep !== '' ? cls.max_iep : '—' }}</td>
+                <td>{{ cls.max_mll != null && cls.max_mll !== '' ? cls.max_mll : '—' }}</td>
                 <td style="text-align: right;">
                   <button @click="editClass(cls)" class="icon-btn edit-btn" title="Edit class">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -129,7 +145,9 @@ const form = ref({
   teacher_name: '',
   course_number: '',
   grade_level: '',
-  max_students: 25
+  max_students: 25,
+  max_iep: null,
+  max_mll: null
 });
 
 const safeData = computed(() => Array.isArray(props.classesData) ? props.classesData : []);
@@ -173,7 +191,9 @@ const resetForm = () => {
     teacher_name: '',
     course_number: '',
     grade_level: '',
-    max_students: 25
+    max_students: 25,
+    max_iep: null,
+    max_mll: null
   };
   isEditing.value = false;
   errorMsg.value = "";
@@ -185,7 +205,9 @@ const editClass = (cls) => {
     teacher_name: String(cls.teacher_name || ''),
     course_number: String(cls.course_number || ''),
     grade_level: String(cls.grade_level || ''),
-    max_students: Number(cls.max_students) || 25
+    max_students: Number(cls.max_students) || 25,
+    max_iep: cls.max_iep != null && cls.max_iep !== '' ? Number(cls.max_iep) : null,
+    max_mll: cls.max_mll != null && cls.max_mll !== '' ? Number(cls.max_mll) : null
   };
   isEditing.value = true;
   errorMsg.value = "";
@@ -211,6 +233,8 @@ const saveClass = () => {
   const cNum = String(form.value.course_number).trim();
   const sGrade = String(form.value.grade_level).trim();
   const mStudents = Number(form.value.max_students) || 25;
+  const mIep = form.value.max_iep != null && form.value.max_iep !== '' ? Number(form.value.max_iep) : null;
+  const mMll = form.value.max_mll != null && form.value.max_mll !== '' ? Number(form.value.max_mll) : null;
   
   if (!sNum || !tName || !cNum || !sGrade) {
     errorMsg.value = "Section, Teacher, Course, and Grade are required.";
@@ -228,7 +252,9 @@ const saveClass = () => {
         teacher_name: tName,
         course_number: cNum,
         grade_level: sGrade,
-        max_students: mStudents
+        max_students: mStudents,
+        max_iep: mIep,
+        max_mll: mMll
       };
     }
   } else {
@@ -243,7 +269,9 @@ const saveClass = () => {
       teacher_name: tName,
       course_number: cNum,
       grade_level: sGrade,
-      max_students: mStudents
+      max_students: mStudents,
+      max_iep: mIep,
+      max_mll: mMll
     });
   }
   

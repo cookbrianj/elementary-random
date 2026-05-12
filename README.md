@@ -61,6 +61,8 @@ An administrative-grade, web-based tool for equitably distributing students into
 | `grade_level` | Grade Level | Yes | - |
 | `max_students` | Class Capacity | Yes | - |
 | `section_number` | Section Code | Yes | e.g. 201 |
+| `max_iep` | Max IEP Students | No | Leave blank for no limit |
+| `max_mll` | Max MLL Students | No | Leave blank for no limit |
 
 ### Student Avoids CSV (Optional — `avoids.csv`)
 Prevents specific student pairs from being placed in the same classroom. Each row defines one pair that must be separated. The relationship is **bidirectional** — listing Student A → Student B also prevents B → A.
