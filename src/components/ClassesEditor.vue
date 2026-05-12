@@ -139,6 +139,7 @@ const searchQuery = ref("");
 const gradeFilter = ref("");
 const errorMsg = ref("");
 const isEditing = ref(false);
+const originalSection = ref(null);
 
 const form = ref({
   section_number: '',
@@ -196,12 +197,16 @@ const resetForm = () => {
     max_mll: null
   };
   isEditing.value = false;
+  originalSection.value = null;
   errorMsg.value = "";
 };
 
 const editClass = (cls) => {
+  const sNum = String(cls.section_number || '').trim();
+  originalSection.value = sNum;
+  
   form.value = {
-    section_number: String(cls.section_number || '').trim(),
+    section_number: sNum,
     teacher_name: String(cls.teacher_name || '').trim(),
     course_number: String(cls.course_number || '').trim(),
     grade_level: String(cls.grade_level || '').trim(),
@@ -243,12 +248,13 @@ const saveClass = () => {
   
   const newData = [...safeData.value];
   
-  if (isEditing.value) {
-    const index = newData.findIndex(c => String(c.section_number || '').trim() === sNum);
+  if (isEditing.value && originalSection.value !== null) {
+    const index = newData.findIndex(c => String(c.section_number || '').trim() === originalSection.value);
     if (index !== -1) {
       // Preserve other fields that might be attached to the class
       newData[index] = {
         ...newData[index],
+        section_number: sNum, // In case we ever allow editing it
         teacher_name: tName,
         course_number: cNum,
         grade_level: sGrade,
@@ -257,7 +263,7 @@ const saveClass = () => {
         max_mll: mMll
       };
     } else {
-      errorMsg.value = "Could not find the class to update. Please try again.";
+      errorMsg.value = "Could not find the original class to update. Please try again.";
       return;
     }
   } else {
