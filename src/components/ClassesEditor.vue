@@ -201,10 +201,10 @@ const resetForm = () => {
 
 const editClass = (cls) => {
   form.value = {
-    section_number: String(cls.section_number || ''),
-    teacher_name: String(cls.teacher_name || ''),
-    course_number: String(cls.course_number || ''),
-    grade_level: String(cls.grade_level || ''),
+    section_number: String(cls.section_number || '').trim(),
+    teacher_name: String(cls.teacher_name || '').trim(),
+    course_number: String(cls.course_number || '').trim(),
+    grade_level: String(cls.grade_level || '').trim(),
     max_students: Number(cls.max_students) || 25,
     max_iep: cls.max_iep != null && cls.max_iep !== '' ? Number(cls.max_iep) : null,
     max_mll: cls.max_mll != null && cls.max_mll !== '' ? Number(cls.max_mll) : null
@@ -244,7 +244,7 @@ const saveClass = () => {
   const newData = [...safeData.value];
   
   if (isEditing.value) {
-    const index = newData.findIndex(c => String(c.section_number) === sNum);
+    const index = newData.findIndex(c => String(c.section_number || '').trim() === sNum);
     if (index !== -1) {
       // Preserve other fields that might be attached to the class
       newData[index] = {
@@ -256,10 +256,13 @@ const saveClass = () => {
         max_iep: mIep,
         max_mll: mMll
       };
+    } else {
+      errorMsg.value = "Could not find the class to update. Please try again.";
+      return;
     }
   } else {
-    // Check for duplicate ID
-    if (newData.some(c => String(c.section_number) === sNum)) {
+    // Check for duplicate ID (using trimmed comparison)
+    if (newData.some(c => String(c.section_number || '').trim() === sNum)) {
       errorMsg.value = "A class with this section number already exists.";
       return;
     }

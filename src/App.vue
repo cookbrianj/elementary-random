@@ -294,7 +294,8 @@ const handleStudentDrop = ({ student_number, source_section, target_section }) =
 
 const handleUpdateMax = ({ section_number, newMax, newMaxIep, newMaxMll }) => {
   if (classesData.value) {
-    const originalClass = classesData.value.find(c => String(c.section_number) === String(section_number));
+    const sNum = String(section_number).trim();
+    const originalClass = classesData.value.find(c => String(c.section_number || '').trim() === sNum);
     if (originalClass) {
       originalClass.max_students = String(newMax);
       originalClass.max_iep = newMaxIep;
