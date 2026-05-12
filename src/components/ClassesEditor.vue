@@ -139,7 +139,7 @@ const searchQuery = ref("");
 const gradeFilter = ref("");
 const errorMsg = ref("");
 const isEditing = ref(false);
-const originalSection = ref(null);
+const editingIndex = ref(-1); // Track the original array index being edited
 
 const form = ref({
   section_number: '',
@@ -160,11 +160,13 @@ const availableGrades = computed(() => {
 });
 
 const filteredClasses = computed(() => {
-  let list = safeData.value.filter(c => {
-    return String(c.section_number || '').trim() !== '' &&
-           String(c.teacher_name || '').trim() !== '' &&
-           String(c.grade_level || '').trim() !== '';
-  });
+  let list = safeData.value
+    .map((c, idx) => ({ ...c, _origIndex: idx })) // tag each record with its source index
+    .filter(c => {
+      return String(c.section_number || '').trim() !== '' &&
+             String(c.teacher_name || '').trim() !== '' &&
+             String(c.grade_level || '').trim() !== '';
+    });
   
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase().trim();
@@ -197,16 +199,16 @@ const resetForm = () => {
     max_mll: null
   };
   isEditing.value = false;
-  originalSection.value = null;
+  editingIndex.value = -1;
   errorMsg.value = "";
 };
 
 const editClass = (cls) => {
-  const sNum = String(cls.section_number || '').trim();
-  originalSection.value = sNum;
+  // Use the _origIndex tag we attached in filteredClasses to track the exact record
+  editingIndex.value = cls._origIndex;
   
   form.value = {
-    section_number: sNum,
+    section_number: String(cls.section_number || '').trim(),
     teacher_name: String(cls.teacher_name || '').trim(),
     course_number: String(cls.course_number || '').trim(),
     grade_level: String(cls.grade_level || '').trim(),
@@ -220,11 +222,13 @@ const editClass = (cls) => {
 
 const deleteClass = (cls) => {
   if (confirm(`Are you sure you want to delete ${cls.teacher_name}'s class?`)) {
-    const newData = safeData.value.filter(c => String(c.section_number) !== String(cls.section_number));
+    // Use _origIndex for precise deletion
+    const deleteIdx = cls._origIndex;
+    const newData = safeData.value.filter((_, i) => i !== deleteIdx);
     emit('update-classes', newData);
     
     // If we were editing this class, reset the form
-    if (isEditing.value && String(form.value.section_number) === String(cls.section_number)) {
+    if (isEditing.value && editingIndex.value === deleteIdx) {
       resetForm();
     }
   }
@@ -248,31 +252,22 @@ const saveClass = () => {
   
   const newData = [...safeData.value];
   
-  if (isEditing.value && originalSection.value !== null) {
-    const index = newData.findIndex(c => String(c.section_number || '').trim() === originalSection.value);
-    if (index !== -1) {
-      // Preserve other fields that might be attached to the class
-      newData[index] = {
-        ...newData[index],
-        section_number: sNum, // In case we ever allow editing it
-        teacher_name: tName,
-        course_number: cNum,
-        grade_level: sGrade,
-        max_students: mStudents,
-        max_iep: mIep,
-        max_mll: mMll
-      };
-    } else {
-      errorMsg.value = "Could not find the original class to update. Please try again.";
-      return;
-    }
+  if (isEditing.value && editingIndex.value >= 0 && editingIndex.value < newData.length) {
+    // Update the exact record at the tracked array index
+    newData[editingIndex.value] = {
+      ...newData[editingIndex.value],
+      section_number: sNum,
+      teacher_name: tName,
+      course_number: cNum,
+      grade_level: sGrade,
+      max_students: mStudents,
+      max_iep: mIep,
+      max_mll: mMll
+    };
+  } else if (isEditing.value) {
+    errorMsg.value = "Could not find the original class to update. Please try again.";
+    return;
   } else {
-    // Check for duplicate ID (using trimmed comparison)
-    if (newData.some(c => String(c.section_number || '').trim() === sNum)) {
-      errorMsg.value = "A class with this section number already exists.";
-      return;
-    }
-    
     newData.push({
       section_number: sNum,
       teacher_name: tName,
