@@ -142,6 +142,7 @@ const saveSettings = () => {
   if (tempMax.value > 0) {
     emit('update-max', {
       section_number: props.summary.section_number,
+      grade_level: props.summary.grade_level,
       newMax: tempMax.value,
       newMaxIep: tempMaxIep.value === '' ? null : tempMaxIep.value,
       newMaxMll: tempMaxMll.value === '' ? null : tempMaxMll.value
@@ -151,7 +152,10 @@ const saveSettings = () => {
 };
 
 const confirmDelete = () => {
-  emit('delete-section', props.summary.section_number);
+  emit('delete-section', {
+    section_number: props.summary.section_number,
+    grade_level: props.summary.grade_level
+  });
 };
 
 const copyStudentNumbers = async () => {
@@ -192,7 +196,8 @@ const handleDrop = (e) => {
 const toggleLock = (student) => {
   emit('toggle-lock', {
     student_number: student.student_number,
-    section_number: props.summary.section_number
+    section_number: props.summary.section_number,
+    grade_level: props.summary.grade_level
   });
 };
 

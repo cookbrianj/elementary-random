@@ -26,11 +26,19 @@ export function runBalancer(students, classes, targetGrade, lockedMap = {}, avoi
     roster: []
   }));
 
+  console.log(`Class Status for Grade ${targetGrade}:`, classStatus.map(c => ({
+    teacher: c.teacher_name,
+    section: c.section_number,
+    maxIep: c.maxIep,
+    maxMll: c.maxMll
+  })));
+
   // Helper to safely check boolean-like CSV strings
   const isTrue = (val) => {
+    if (val === true || val === 1) return true;
     if (!val) return false;
     const s = String(val).toLowerCase().trim();
-    return s === 'true' || s === 'yes' || s === '1' || s === 'y';
+    return s === 'true' || s === 'yes' || s === '1' || s === 'y' || s === 'iep' || s === 'mll';
   };
 
   // Pre-place locked students
@@ -115,6 +123,13 @@ export function runBalancer(students, classes, targetGrade, lockedMap = {}, avoi
     }
   });
 
+  console.log(`Pools for Grade ${targetGrade}:`, {
+    iep_mll: pools.iep_mll.length,
+    iep_only: pools.iep_only.length,
+    mll_only: pools.mll_only.length,
+    regular: pools.regular.length
+  });
+
   // Fisher-Yates shuffle for randomization
   const shuffleArray = (array) => {
     for (let i = array.length - 1; i > 0; i--) {
@@ -163,6 +178,7 @@ export function runBalancer(students, classes, targetGrade, lockedMap = {}, avoi
           // Check IEP cap
           if (hasIEP && currentClass.maxIep !== null && currentClass.maxIep !== undefined) {
             if (currentClass.iepCount >= currentClass.maxIep) {
+              console.log(`Skipping class ${currentClass.section_number} for IEP student ${student.student_name}: iepCount=${currentClass.iepCount} >= maxIep=${currentClass.maxIep}`);
               classIndex = (classIndex + 1) % distributionOrder.length;
               attempts++;
               continue;
@@ -171,6 +187,7 @@ export function runBalancer(students, classes, targetGrade, lockedMap = {}, avoi
           // Check MLL cap
           if (hasMLL && currentClass.maxMll !== null && currentClass.maxMll !== undefined) {
             if (currentClass.mllCount >= currentClass.maxMll) {
+              console.log(`Skipping class ${currentClass.section_number} for MLL student ${student.student_name}: mllCount=${currentClass.mllCount} >= maxMll=${currentClass.maxMll}`);
               classIndex = (classIndex + 1) % distributionOrder.length;
               attempts++;
               continue;
@@ -234,6 +251,7 @@ export function runBalancer(students, classes, targetGrade, lockedMap = {}, avoi
       teacher_name: c.teacher_name,
       course_number: c.course_number,
       section_number: c.section_number,
+      grade_level: c.grade_level,
       total: c.currentCount,
       max: c.max,
       maxIep: c.maxIep,

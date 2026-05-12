@@ -155,9 +155,10 @@ const form = ref({
 });
 
 const isTrue = (val) => {
+  if (val === true || val === 1) return true;
   if (!val) return false;
   const s = String(val).toLowerCase().trim();
-  return s === 'true' || s === 'yes' || s === '1' || s === 'y' || val === true;
+  return s === 'true' || s === 'yes' || s === '1' || s === 'y' || s === 'iep' || s === 'mll';
 };
 
 const safeData = computed(() => Array.isArray(props.studentsData) ? props.studentsData : []);
