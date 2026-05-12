@@ -17,9 +17,9 @@ export function runBalancer(students, classes, targetGrade, lockedMap = {}, avoi
   // Initialize classes with tracking properties
   const classStatus = gradeClasses.map(c => ({
     ...c,
-    max: parseInt(c.max_students, 10),
-    maxIep: c.max_iep != null && c.max_iep !== '' ? parseInt(c.max_iep, 10) : null,
-    maxMll: c.max_mll != null && c.max_mll !== '' ? parseInt(c.max_mll, 10) : null,
+    max: parseInt(c.max_students, 10) || 25,
+    maxIep: (c.max_iep !== null && c.max_iep !== undefined && c.max_iep !== '') ? Number(c.max_iep) : null,
+    maxMll: (c.max_mll !== null && c.max_mll !== undefined && c.max_mll !== '') ? Number(c.max_mll) : null,
     currentCount: 0,
     iepCount: 0,
     mllCount: 0,
@@ -42,13 +42,26 @@ export function runBalancer(students, classes, targetGrade, lockedMap = {}, avoi
     if (lockedMap[sNum]) {
       const targetSection = String(lockedMap[sNum]);
       const targetClass = classStatus.find(c => String(c.section_number) === targetSection);
-      if (targetClass) {
+      
+      const hasIEP = isTrue(s.iep);
+      const hasMLL = isTrue(s.mll);
+      
+      // Check if this lock violates any caps
+      let violatesCap = false;
+      if (hasIEP && targetClass && targetClass.maxIep !== null && targetClass.iepCount >= targetClass.maxIep) {
+        violatesCap = true;
+      }
+      if (hasMLL && targetClass && targetClass.maxMll !== null && targetClass.mllCount >= targetClass.maxMll) {
+        violatesCap = true;
+      }
+      
+      if (targetClass && !violatesCap) {
         targetClass.roster.push(s);
         targetClass.currentCount++;
-        if (isTrue(s.iep)) targetClass.iepCount++;
-        if (isTrue(s.mll)) targetClass.mllCount++;
+        if (hasIEP) targetClass.iepCount++;
+        if (hasMLL) targetClass.mllCount++;
       } else {
-        // Source class was not found (maybe grade level changed?), treat as remaining
+        // Lock violates cap or class not found, treat as remaining so they can be moved
         remainingStudents.push(s);
       }
     } else {
@@ -144,24 +157,29 @@ export function runBalancer(students, classes, targetGrade, lockedMap = {}, avoi
         }
         
         if (currentClass.currentCount < currentClass.max && !hasAvoidConflict) {
+          const hasIEP = isTrue(student.iep);
+          const hasMLL = isTrue(student.mll);
+
           // Check IEP cap
-          if (currentClass.maxIep != null && isTrue(student.iep) && currentClass.iepCount >= currentClass.maxIep) {
-            // IEP cap reached, skip this class
-            classIndex = (classIndex + 1) % distributionOrder.length;
-            attempts++;
-            continue;
+          if (hasIEP && currentClass.maxIep !== null && currentClass.maxIep !== undefined) {
+            if (currentClass.iepCount >= currentClass.maxIep) {
+              classIndex = (classIndex + 1) % distributionOrder.length;
+              attempts++;
+              continue;
+            }
           }
           // Check MLL cap
-          if (currentClass.maxMll != null && isTrue(student.mll) && currentClass.mllCount >= currentClass.maxMll) {
-            // MLL cap reached, skip this class
-            classIndex = (classIndex + 1) % distributionOrder.length;
-            attempts++;
-            continue;
+          if (hasMLL && currentClass.maxMll !== null && currentClass.maxMll !== undefined) {
+            if (currentClass.mllCount >= currentClass.maxMll) {
+              classIndex = (classIndex + 1) % distributionOrder.length;
+              attempts++;
+              continue;
+            }
           }
           currentClass.roster.push(student);
           currentClass.currentCount++;
-          if (isTrue(student.iep)) currentClass.iepCount++;
-          if (isTrue(student.mll)) currentClass.mllCount++;
+          if (hasIEP) currentClass.iepCount++;
+          if (hasMLL) currentClass.mllCount++;
           placed = true;
         }
         
