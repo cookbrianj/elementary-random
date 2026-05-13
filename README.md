@@ -13,10 +13,44 @@ An administrative-grade, web-based tool for equitably distributing students into
 ## 🌟 Core Features
 
 ### 1. Intelligent Balancing Algorithm
-*   **Weighted Parity**: prioritizes the distribution of students with IEP and MLL statuses across all available sections first.
-*   **Gender Balance**: Automatically maintains an even split of male and female students per classroom.
-*   **Randomized Residuals**: Fairly distributes "remainder" students so that classrooms with slightly higher counts are chosen randomly rather than alphabetically.
-*   **Student Avoids**: Optionally upload a CSV of student pairs that must not share a classroom. The algorithm enforces separation during placement and will error if a conflict cannot be resolved.
+*   **Multi-Step Distribution**: Prioritizes specialized needs (IEP/MLL) before filling with general population.
+*   **Least-Filled-First Compensation**: Automatically balances total class counts by placing regular students into classes that received fewer specialized students.
+*   **Gender Parity**: Maintains even gender splits across all sections.
+*   **Conflict Enforcement**: Respects student "avoids" pairs and hard demographic caps (`max_iep`, `max_mll`).
+
+---
+
+## 🧮 Balancing Algorithm Details
+
+The dashboard uses a multi-pass placement algorithm designed to achieve equitable distribution while respecting hard constraints.
+
+### 1. Pre-Processing & Locking
+Before any automated placement occurs, the algorithm:
+*   Identifies all **Locked Students** (pinned to specific teachers) and places them first.
+*   Checks if these manual placements violate any hard caps (`max_iep` or `max_mll`) and alerts the user if conflicts exist.
+
+### 2. Prioritized Student Pools
+Remaining students are sorted into four distinct pools to ensure high-needs students are spread across classrooms before the general population is added:
+1.  **IEP & MLL**: Students with both statuses (Highest priority).
+2.  **IEP Only**: Students with IEP status.
+3.  **MLL Only**: Students with MLL status.
+4.  **Regular**: Students with no special demographic flags.
+
+### 3. Distribution Strategies
+The algorithm uses two different strategies depending on the pool:
+
+#### Specialized Pools (Round-Robin)
+For the IEP and MLL pools, the algorithm uses a **Round-Robin** approach. It iterates through all available classes, placing one student at a time into classes that have not reached their specific `max_iep` or `max_mll` limits. This ensures that even if only two teachers are eligible to take IEP students, those students are split 50/50 between them.
+
+#### Regular Pool (Least-Filled-First)
+To keep total class sizes balanced, the regular student pool uses a **Least-Filled-First** strategy. For every regular student:
+1.  The algorithm calculates the **fill ratio** (`currentCount / targetMax`) for every eligible classroom.
+2.  The student is placed in the classroom with the lowest ratio.
+3.  This naturally compensates for classes that received more students during the specialized passes, ensuring that final class totals are as even as possible.
+
+### 4. Constraint Enforcement
+*   **Student Avoids**: If two students are listed in the `avoids.csv`, the algorithm will never place them in the same section. If a placement becomes impossible due to too many "avoids" constraints, the algorithm stops and identifies the problematic student.
+*   **Gender Balancing**: Within the regular pool, students are sorted by gender and shuffled internally. This ensures that as classes are filled via the "Least-Filled-First" method, the gender ratio remains stable across all rooms.
 
 ### 2. Multi-Grade Persistence
 *   **Session Switching**: Jump between grade levels (e.g., Grade 2 to Grade 3) without losing progress.
