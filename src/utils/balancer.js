@@ -225,7 +225,47 @@ export function runBalancer(students, classes, targetGrade, lockedMap = {}, avoi
     return Math.random() - 0.5;
   });
   
-  distributePool(pools.regular);
+  // Distribute regular students using least-filled-first strategy so that
+  // classes that already received IEP/MLL students get fewer regulars,
+  // keeping total counts balanced across all classes.
+  const distributeRegularPool = (pool) => {
+    for (const student of pool) {
+      const studentNumStr = String(student.student_number).trim();
+      const avoidSet = avoidsMap[studentNumStr];
+
+      // Find eligible classes (have capacity and no avoid conflicts)
+      const eligible = distributionOrder.filter(c => {
+        if (c.currentCount >= c.max) return false;
+        if (avoidSet) {
+          for (const existing of c.roster) {
+            if (avoidSet.has(String(existing.student_number).trim())) {
+              return false;
+            }
+          }
+        }
+        return true;
+      });
+
+      if (eligible.length === 0) {
+        throw new Error(`Could not place student ${student.student_name || student.name || 'Unknown'} (${student.student_number}) due to capacity or avoid conflicts.`);
+      }
+
+      // Sort by fill ratio (currentCount / max) to balance totals proportionally.
+      // Random tie-breaking when ratios are effectively equal.
+      eligible.sort((a, b) => {
+        const ratioA = a.currentCount / a.max;
+        const ratioB = b.currentCount / b.max;
+        if (Math.abs(ratioA - ratioB) < 0.001) return Math.random() - 0.5;
+        return ratioA - ratioB;
+      });
+
+      const targetClass = eligible[0];
+      targetClass.roster.push(student);
+      targetClass.currentCount++;
+    }
+  };
+
+  distributeRegularPool(pools.regular);
 
   // Flatten logic for export
   const placedStudents = [];

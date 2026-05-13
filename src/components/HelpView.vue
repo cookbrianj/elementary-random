@@ -129,6 +129,16 @@
                   <td>Unique code for the section</td>
                   <td>201, 202, A</td>
                 </tr>
+                <tr>
+                  <td><code>max_iep</code></td>
+                  <td>Maximum IEP students allowed</td>
+                  <td>6, 8 (Optional)</td>
+                </tr>
+                <tr>
+                  <td><code>max_mll</code></td>
+                  <td>Maximum MLL students allowed</td>
+                  <td>4, 5 (Optional)</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -137,9 +147,9 @@
               <span>Example CSV Content</span>
               <button @click="downloadSample('classes')" class="download-link">Download Template</button>
             </header>
-            <pre>course_number,teacher_name,grade_level,max_students,section_number
-101,Mrs. Johnson,2,25,201
-101,Mr. Davis,2,24,202</pre>
+            <pre>course_number,teacher_name,grade_level,max_students,section_number,max_iep,max_mll
+101,Mrs. Johnson,2,25,201,6,4
+101,Mr. Davis,2,24,202,6,4</pre>
           </div>
         </div>
       </section>
@@ -303,7 +313,7 @@ const downloadSample = (type) => {
     content = 'student_number_1,student_number_2\n1001,1003\n1002,1005';
     filename = 'sample_avoids.csv';
   } else {
-    content = 'course_number,teacher_name,grade_level,max_students,section_number\n"101","Mrs. Johnson",2,25,201\n"101","Mr. Davis",2,24,202';
+    content = 'course_number,teacher_name,grade_level,max_students,section_number,max_iep,max_mll\n"101","Mrs. Johnson",2,25,201,6,4\n"101","Mr. Davis",2,24,202,6,4';
     filename = 'sample_classes.csv';
   }
   
