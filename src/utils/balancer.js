@@ -316,12 +316,15 @@ export function runBalancer(students, classes, targetGrade, lockedMap = {}, avoi
 
 export function exportToCSV(data) {
   // data should just be placedStudents
-  // We explicitly want column headers: grade_level, student_number, teacher_name, section_number
+  // We explicitly want column headers: grade_level, student_name, student_number, teacher_name, section_number, iep, mll
   const mapped = data.map(row => ({
     grade_level: row.grade_level,
+    student_name: row.student_name,
     student_number: row.student_number,
     teacher_name: row.teacher_name,
-    section_number: row.section_number
+    section_number: row.section_number,
+    iep: row.iep || '',
+    mll: row.mll || ''
   }));
   
   const csv = Papa.unparse(mapped);
