@@ -142,6 +142,7 @@ const saveSettings = () => {
   if (tempMax.value > 0) {
     emit('update-max', {
       section_number: props.summary.section_number,
+      course_number: props.summary.course_number,
       grade_level: props.summary.grade_level,
       newMax: tempMax.value,
       newMaxIep: tempMaxIep.value === '' ? null : tempMaxIep.value,
@@ -154,6 +155,7 @@ const saveSettings = () => {
 const confirmDelete = () => {
   emit('delete-section', {
     section_number: props.summary.section_number,
+    course_number: props.summary.course_number,
     grade_level: props.summary.grade_level
   });
 };
@@ -174,18 +176,23 @@ const handleDragStart = (e, student) => {
   e.dataTransfer.dropEffect = 'move';
   e.dataTransfer.setData('application/json', JSON.stringify({
     student_number: student.student_number,
-    source_section: props.summary.section_number
+    source_section: props.summary.section_number,
+    source_course: props.summary.course_number
   }));
 };
 
 const handleDrop = (e) => {
   try {
     const data = JSON.parse(e.dataTransfer.getData('application/json'));
-    if (data && data.student_number && data.source_section !== props.summary.section_number) {
+    const sourceKey = `${data.source_course || ''}.${data.source_section}`;
+    const targetKey = props.summary.classKey;
+    if (data && data.student_number && sourceKey !== targetKey) {
       emit('drop-student', {
         student_number: data.student_number,
         source_section: data.source_section,
-        target_section: props.summary.section_number
+        source_course: data.source_course,
+        target_section: props.summary.section_number,
+        target_course: props.summary.course_number
       });
     }
   } catch(err) {
@@ -197,6 +204,7 @@ const toggleLock = (student) => {
   emit('toggle-lock', {
     student_number: student.student_number,
     section_number: props.summary.section_number,
+    course_number: props.summary.course_number,
     grade_level: props.summary.grade_level
   });
 };

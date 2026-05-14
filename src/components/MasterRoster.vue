@@ -63,13 +63,13 @@
               <td class="teacher-cell">
                 <div v-if="editingTeacherStudentNum === student.student_number" class="teacher-edit">
                   <select 
-                    :value="student.section_number" 
+                    :value="getStudentClassKey(student.student_number)" 
                     @change="handleTeacherChange(student, $event)"
                     @blur="editingTeacherStudentNum = null"
                     @click.stop
                     class="teacher-select"
                   >
-                    <option v-for="section in sections" :key="section.section_number" :value="section.section_number">
+                    <option v-for="section in sections" :key="section.classKey" :value="section.classKey">
                       {{ section.teacher_name }}
                     </option>
                   </select>
@@ -119,8 +119,8 @@
             </div>
             <div class="modal-teacher-row">
               <span class="modal-teacher-label">Current Teacher:</span>
-              <select class="modal-teacher-select" :value="selectedAvoidStudent.section_number" :disabled="isStudentLocked(selectedAvoidStudent.student_number)" @change="handleModalTeacherChange(selectedAvoidStudent, $event)">
-                <option v-for="section in sections" :key="'modal-sel-'+section.section_number" :value="section.section_number">
+              <select class="modal-teacher-select" :value="getStudentClassKey(selectedAvoidStudent.student_number)" :disabled="isStudentLocked(selectedAvoidStudent.student_number)" @change="handleModalTeacherChange(selectedAvoidStudent, $event)">
+                <option v-for="section in sections" :key="'modal-sel-'+section.classKey" :value="section.classKey">
                   {{ section.teacher_name }}
                 </option>
               </select>
@@ -138,8 +138,8 @@
                 </div>
                 <div class="modal-teacher-row" style="margin-top: 0.35rem;">
                   <span class="modal-teacher-label">Teacher:</span>
-                  <select class="modal-teacher-select" :value="getStudentSection(sNum)" :disabled="isStudentLocked(sNum)" @change="handleModalAvoidTeacherChange(sNum, $event)">
-                    <option v-for="section in sections" :key="'modal-av-'+section.section_number" :value="section.section_number">
+                  <select class="modal-teacher-select" :value="getStudentClassKey(sNum)" :disabled="isStudentLocked(sNum)" @change="handleModalAvoidTeacherChange(sNum, $event)">
+                    <option v-for="section in sections" :key="'modal-av-'+section.classKey" :value="section.classKey">
                       {{ section.teacher_name }}
                     </option>
                   </select>
@@ -219,6 +219,12 @@ const getStudentSection = (sNum) => {
   return s ? String(s.section_number) : '';
 };
 
+const getStudentClassKey = (sNum) => {
+  const s = props.students.find(st => String(st.student_number) === String(sNum));
+  if (!s) return '';
+  return `${String(s.course_number || '')}.${String(s.section_number || '')}`;
+};
+
 const isStudentLocked = (sNum) => {
   const s = props.students.find(st => String(st.student_number) === String(sNum));
   return s ? !!s.isLocked : false;
@@ -240,22 +246,32 @@ const closeAvoidsModal = () => {
 };
 
 const handleModalTeacherChange = (student, event) => {
-  const newSectionNumber = event.target.value;
-  emit('move-student', {
-    student_number: student.student_number,
-    source_section: student.section_number,
-    target_section: newSectionNumber
-  });
+  const classKey = event.target.value;
+  const [course_number, section_number] = classKey.split('.');
+  const currentClassKey = getStudentClassKey(student.student_number);
+  if (currentClassKey && currentClassKey !== classKey) {
+    emit('move-student', {
+      student_number: student.student_number,
+      source_section: student.section_number,
+      source_course: student.course_number,
+      target_section: section_number,
+      target_course: course_number
+    });
+  }
 };
 
 const handleModalAvoidTeacherChange = (sNum, event) => {
-  const newSectionNumber = event.target.value;
-  const currentSection = getStudentSection(sNum);
-  if (currentSection && currentSection !== newSectionNumber) {
+  const classKey = event.target.value;
+  const [course_number, section_number] = classKey.split('.');
+  const currentClassKey = getStudentClassKey(sNum);
+  if (currentClassKey && currentClassKey !== classKey) {
+    const s = props.students.find(st => String(st.student_number) === String(sNum));
     emit('move-student', {
       student_number: sNum,
-      source_section: currentSection,
-      target_section: newSectionNumber
+      source_section: s ? s.section_number : '',
+      source_course: s ? s.course_number : '',
+      target_section: section_number,
+      target_course: course_number
     });
   }
 };
@@ -278,16 +294,20 @@ const toggleSort = (key) => {
 const toggleLock = (student) => {
   emit('toggle-lock', {
     student_number: student.student_number,
-    section_number: student.section_number
+    section_number: student.section_number,
+    course_number: student.course_number
   });
 };
 
 const handleTeacherChange = (student, event) => {
-  const newSectionNumber = event.target.value;
+  const classKey = event.target.value;
+  const [course_number, section_number] = classKey.split('.');
   emit('move-student', {
     student_number: student.student_number,
     source_section: student.section_number,
-    target_section: newSectionNumber
+    source_course: student.course_number,
+    target_section: section_number,
+    target_course: course_number
   });
   editingTeacherStudentNum.value = null;
 };

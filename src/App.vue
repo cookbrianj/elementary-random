@@ -97,7 +97,7 @@
         <div class="charts-grid">
           <ClassDemographicsChart 
             v-for="summary in results.classSummaries" 
-            :key="summary.section_number" 
+            :key="summary.classKey" 
             :summary="summary" 
             :show-roster="showRosters"
             @drop-student="handleStudentDrop"
@@ -140,7 +140,7 @@ const selectedGrade = ref("");
 const errorMessage = ref("");
 const results = computed(() => allResultsByGrade.value[selectedGrade.value] || null);
 const showRosters = ref(true);
-const lockedStudents = ref({}); // student_number -> section_number
+const lockedStudents = ref({}); // student_number -> "course_number.section_number"
 const allResultsByGrade = ref({}); // { '2': balancerResults, '3': ... }
 const isLoadingScenario = ref(false);
 
@@ -228,24 +228,40 @@ const handleAddTeacher = (teacherInfo) => {
   }
 };
 
-const handleToggleLock = ({ student_number, section_number, grade_level }) => {
+const handleToggleLock = ({ student_number, section_number, course_number, grade_level }) => {
   const sNum = String(student_number);
-  const classId = String(section_number);
+  const classKey = `${String(course_number || '')}.${String(section_number)}`;
   
   if (lockedStudents.value[sNum]) {
     delete lockedStudents.value[sNum];
   } else {
-    lockedStudents.value[sNum] = classId;
+    lockedStudents.value[sNum] = classKey;
   }
   
-  handleRunClick();
+  // Update the visual lock state in-place without rebalancing
+  const isNowLocked = !!lockedStudents.value[sNum];
+  Object.values(allResultsByGrade.value).forEach(gradeResults => {
+    if (!gradeResults) return;
+    gradeResults.classSummaries.forEach(cls => {
+      const student = cls.roster.find(s => String(s.student_number) === sNum);
+      if (student) student.isLocked = isNowLocked;
+    });
+    const placed = gradeResults.placedStudents.find(s => String(s.student_number) === sNum);
+    if (placed) placed.isLocked = isNowLocked;
+  });
 };
 
-const handleStudentDrop = ({ student_number, source_section, target_section }) => {
+const handleStudentDrop = ({ student_number, source_section, target_section, source_course, target_course }) => {
   if (!results.value) return;
   
-  const sourceClass = results.value.classSummaries.find(c => String(c.section_number) === String(source_section));
-  const targetClass = results.value.classSummaries.find(c => String(c.section_number) === String(target_section));
+  const sourceKey = source_course ? `${source_course}.${source_section}` : null;
+  const targetKey = target_course ? `${target_course}.${target_section}` : null;
+  
+  // Find by composite key first, fall back to section_number for legacy
+  const sourceClass = (sourceKey && results.value.classSummaries.find(c => c.classKey === sourceKey)) ||
+                      results.value.classSummaries.find(c => String(c.section_number) === String(source_section));
+  const targetClass = (targetKey && results.value.classSummaries.find(c => c.classKey === targetKey)) ||
+                      results.value.classSummaries.find(c => String(c.section_number) === String(target_section));
   
   if (!sourceClass || !targetClass) return;
   
@@ -258,7 +274,7 @@ const handleStudentDrop = ({ student_number, source_section, target_section }) =
   
   // If the student was already locked, update their lock destination
   if (lockedStudents.value[String(student_number)]) {
-    lockedStudents.value[String(student_number)] = String(target_section);
+    lockedStudents.value[String(student_number)] = targetClass.classKey;
   }
   
   sourceClass.total = sourceClass.roster.length;
@@ -276,16 +292,19 @@ const handleStudentDrop = ({ student_number, source_section, target_section }) =
   const placedIndex = results.value.placedStudents.findIndex(s => String(s.student_number) === String(student_number));
   if (placedIndex !== -1) {
     results.value.placedStudents[placedIndex].section_number = targetClass.section_number;
+    results.value.placedStudents[placedIndex].course_number = targetClass.course_number;
     results.value.placedStudents[placedIndex].teacher_name = targetClass.teacher_name;
   }
 };
 
-const handleUpdateMax = ({ section_number, grade_level, newMax, newMaxIep, newMaxMll }) => {
+const handleUpdateMax = ({ section_number, course_number, grade_level, newMax, newMaxIep, newMaxMll }) => {
   if (classesData.value) {
     const sNum = String(section_number).trim();
+    const cNum = String(course_number || '').trim();
     const gLevel = String(grade_level).trim();
     const originalClass = classesData.value.find(c => 
       String(c.section_number || '').trim() === sNum && 
+      String(c.course_number || '').trim() === cNum &&
       String(c.grade_level || '').trim() === gLevel
     );
     if (originalClass) {
@@ -296,16 +315,19 @@ const handleUpdateMax = ({ section_number, grade_level, newMax, newMaxIep, newMa
       // Re-run balancer as changes to limits require a redistribution
       handleRunClick();
     } else {
-      console.error(`Could not find class with section number ${sNum} in grade ${gLevel}`);
+      console.error(`Could not find class with section number ${sNum} (course ${cNum}) in grade ${gLevel}`);
     }
   }
 };
 
-const handleDeleteSection = ({ section_number, grade_level }) => {
+const handleDeleteSection = ({ section_number, course_number, grade_level }) => {
   const sNum = String(section_number).trim();
+  const cNum = String(course_number || '').trim();
   const gLevel = String(grade_level).trim();
+  const classKey = `${cNum}.${sNum}`;
   const targetClass = classesData.value.find(c => 
     String(c.section_number || '').trim() === sNum &&
+    String(c.course_number || '').trim() === cNum &&
     String(c.grade_level || '').trim() === gLevel
   );
   
@@ -314,20 +336,15 @@ const handleDeleteSection = ({ section_number, grade_level }) => {
   if (confirm(`Permanently remove ${targetClass.teacher_name}'s class from the roster? This will re-distribute all students.`)) {
     // 1. Remove from classesData
     classesData.value = classesData.value.filter(c => 
-      !(String(c.section_number || '').trim() === sNum && String(c.grade_level || '').trim() === gLevel)
+      !(String(c.section_number || '').trim() === sNum && 
+        String(c.course_number || '').trim() === cNum && 
+        String(c.grade_level || '').trim() === gLevel)
     );
 
     // 2. Remove any locks associated with this section
     Object.keys(lockedStudents.value).forEach(studentNum => {
-      if (String(lockedStudents.value[studentNum]) === sNum) {
-        // Only remove if it was locked to THIS specific section. 
-        // Note: this might be slightly ambiguous if section numbers are non-unique across grades, 
-        // but lockedStudents currently only stores the section number as the value.
-        // We check if the student belongs to the grade being edited.
-        const student = studentsData.value.find(s => String(s.student_number) === studentNum);
-        if (student && String(student.grade_level).trim() === gLevel) {
-          delete lockedStudents.value[studentNum];
-        }
+      if (String(lockedStudents.value[studentNum]) === classKey) {
+        delete lockedStudents.value[studentNum];
       }
     });
 

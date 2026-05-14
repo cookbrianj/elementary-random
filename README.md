@@ -30,11 +30,10 @@ Before any automated placement occurs, the algorithm:
 *   Checks if these manual placements violate any hard caps (`max_iep` or `max_mll`) and alerts the user if conflicts exist.
 
 ### 2. Prioritized Student Pools
-Remaining students are sorted into four distinct pools to ensure high-needs students are spread across classrooms before the general population is added:
-1.  **IEP & MLL**: Students with both statuses (Highest priority).
-2.  **IEP Only**: Students with IEP status.
-3.  **MLL Only**: Students with MLL status.
-4.  **Regular**: Students with no special demographic flags.
+Remaining students are sorted into distinct pools to ensure high-needs students are spread across classrooms before the general population is added:
+1.  **IEP**: Students with IEP status (including those who are both IEP and MLL).
+2.  **MLL Only**: Students with MLL status.
+3.  **Regular**: Students with no special demographic flags.
 
 ### 3. Distribution Strategies
 The algorithm uses two different strategies depending on the pool:

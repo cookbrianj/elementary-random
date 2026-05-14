@@ -41,6 +41,9 @@ export function runBalancer(students, classes, targetGrade, lockedMap = {}, avoi
     return s === 'true' || s === 'yes' || s === '1' || s === 'y' || s === 'iep' || s === 'mll';
   };
 
+  // Helper to build composite class ID (course_number.section_number)
+  const classId = (c) => `${String(c.course_number || '').trim()}.${String(c.section_number || '').trim()}`;
+
   // Pre-place locked students
   const lockedStudentNumbers = Object.keys(lockedMap);
   const remainingStudents = [];
@@ -48,8 +51,10 @@ export function runBalancer(students, classes, targetGrade, lockedMap = {}, avoi
   gradeStudents.forEach(s => {
     const sNum = String(s.student_number);
     if (lockedMap[sNum]) {
-      const targetSection = String(lockedMap[sNum]);
-      const targetClass = classStatus.find(c => String(c.section_number) === targetSection);
+      const targetKey = String(lockedMap[sNum]);
+      // Support composite key (course.section) or legacy bare section_number
+      const targetClass = classStatus.find(c => classId(c) === targetKey) ||
+                          classStatus.find(c => String(c.section_number) === targetKey);
       
       const hasIEP = isTrue(s.iep);
       const hasMLL = isTrue(s.mll);
@@ -112,9 +117,7 @@ export function runBalancer(students, classes, targetGrade, lockedMap = {}, avoi
     const hasIEP = isTrue(s.iep);
     const hasMLL = isTrue(s.mll);
     
-    if (hasIEP && hasMLL) {
-      pools.iep_mll.push(s);
-    } else if (hasIEP) {
+    if (hasIEP) {
       pools.iep_only.push(s);
     } else if (hasMLL) {
       pools.mll_only.push(s);
@@ -138,7 +141,6 @@ export function runBalancer(students, classes, targetGrade, lockedMap = {}, avoi
     }
   };
   
-  shuffleArray(pools.iep_mll);
   shuffleArray(pools.iep_only);
   shuffleArray(pools.mll_only);
 
@@ -212,7 +214,6 @@ export function runBalancer(students, classes, targetGrade, lockedMap = {}, avoi
   };
 
   // Distribute in priority order
-  distributePool(pools.iep_mll);
   distributePool(pools.iep_only);
   distributePool(pools.mll_only);
   
@@ -300,6 +301,7 @@ export function runBalancer(students, classes, targetGrade, lockedMap = {}, avoi
       femaleCount: c.roster.filter(s => String(s.gender).toLowerCase().trim() === 'f').length,
       iepCount: c.roster.filter(s => isTrue(s.iep)).length,
       mllCount: c.roster.filter(s => isTrue(s.mll)).length,
+      classKey: classId(c),
       roster: c.roster.map(s => ({
         student_number: s.student_number,
         student_name: s.student_name || s.name || 'Unknown',
