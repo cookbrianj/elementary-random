@@ -70,7 +70,7 @@
               <option v-for="grade in availableGrades" :key="grade" :value="grade">Grade {{ grade }}</option>
             </select>
           </div>
-          <button @click="handleRunClick" :disabled="!selectedGrade">Balance Classes</button>
+          <button @click="promptBalance" :disabled="!selectedGrade">Balance Classes</button>
         </div>
         <div v-if="errorMessage" class="error-box">
           {{ errorMessage }}
@@ -117,6 +117,27 @@
         />
       </div>
     </main>
+
+    <Teleport to="body">
+      <div v-if="showBalanceModal" class="modal-overlay" @click="cancelBalance">
+        <div class="modal-content" @click.stop>
+          <div class="modal-header">
+            <h3>Confirm Rebalance</h3>
+            <button class="close-btn" @click="cancelBalance">×</button>
+          </div>
+          <div class="modal-body">
+            <div class="warning-banner" style="margin-bottom: 0;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              <span>Are you sure you want to balance classes? This will reshuffle all students who are not locked to a specific teacher.</span>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="secondary" @click="cancelBalance">Cancel</button>
+            <button class="primary" @click="confirmBalance">Rebalance Classes</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -138,6 +159,7 @@ const classesData = ref(null);
 const avoidsData = ref(null);
 const selectedGrade = ref("");
 const errorMessage = ref("");
+const showBalanceModal = ref(false);
 const results = computed(() => allResultsByGrade.value[selectedGrade.value] || null);
 const showRosters = ref(true);
 const lockedStudents = ref({}); // student_number -> "course_number.section_number"
@@ -165,6 +187,24 @@ const availableGrades = computed(() => {
   const unique = [...new Set([...sGrades, ...cGrades])];
   return unique.sort((a,b) => parseInt(a) - parseInt(b));
 });
+
+const promptBalance = () => {
+  // If there are no results yet, balance without prompt
+  if (!allResultsByGrade.value[selectedGrade.value]) {
+    handleRunClick();
+  } else {
+    showBalanceModal.value = true;
+  }
+};
+
+const confirmBalance = () => {
+  showBalanceModal.value = false;
+  handleRunClick();
+};
+
+const cancelBalance = () => {
+  showBalanceModal.value = false;
+};
 
 const handleRunClick = () => {
   errorMessage.value = "";
@@ -702,5 +742,85 @@ header p {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   }
 }
-</style>
 
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modal-content {
+  background-color: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  width: 90%;
+  max-width: 500px;
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+  animation: modalIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--surface-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--primary);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.warning-banner {
+  background-color: rgba(197, 179, 88, 0.1);
+  border-left: 4px solid var(--primary);
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  color: var(--primary);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.modal-actions {
+  padding: 1.5rem;
+  background-color: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid var(--surface-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+</style>
